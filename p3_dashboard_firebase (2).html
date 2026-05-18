@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>P3 Healthcare — CMS Training Quiz</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script type="module">
+  // ==================== FIREBASE CONFIGURATION ====================
+  // Replace the values below with your own Firebase project credentials.
+  // Go to: https://console.firebase.google.com → Your Project → Project Settings → Your Apps → Web App
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD2_ut-bIutEF-ooQMDf1SV1gtR96AhhqE",
+    authDomain: "p3cmsquiz.firebaseapp.com",
+    projectId: "p3cmsquiz",
+    storageBucket: "p3cmsquiz.firebasestorage.app",
+    messagingSenderId: "1067557694566",
+    appId: "1:1067557694566:web:617324dd4daf15f97b11a7",
+    measurementId: "G-5BMTY3D2M5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Expose Firebase API to the rest of the page (non-module scripts)
+  window._fb = { db, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot, query, orderBy, serverTimestamp, where };
+  window._fbReady = true;
+  document.dispatchEvent(new Event('firebase-ready'));
+</script>
+<style>
+:root {
+  --p3-purple: #6B1F7A;
+  --p3-purple-dark: #4a1558;
+  --p3-purple-light: #f3e8f7;
+  --p3-gold: #D4A017;
+  --p3-gold-light: #fff8e6;
+  --green: #16a34a;
+  --green-light: #dcfce7;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --white: #ffffff;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.5; min-height: 100vh; }
+
+/* === LOGIN / NAME ENTRY === */
+.login-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--p3-purple-light), var(--p3-gold-light)); }
+.login-card { background: var(--white); border-radius: 16px; padding: 40px; width: 100%; max-width: 420px; box-shadow: 0 20px 40px rgba(107,31,122,0.15); text-align: center; }
+.login-logo { width: 80px; height: 80px; margin: 0 auto 20px; }
+.login-card h1 { font-size: 1.4rem; font-weight: 700; color: var(--p3-purple); margin-bottom: 4px; }
+.login-card p { font-size: 0.85rem; color: var(--gray-500); margin-bottom: 28px; }
+.form-group { text-align: left; margin-bottom: 16px; }
+.form-group label { display: block; font-size: 0.75rem; font-weight: 600; color: var(--gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.form-group input { width: 100%; padding: 12px 14px; border: 1.5px solid var(--gray-200); border-radius: 10px; font-size: 0.95rem; font-family: inherit; outline: none; transition: border-color 0.2s; }
+.form-group input:focus { border-color: var(--p3-purple); }
+.btn { display: inline-block; padding: 12px 32px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+.btn-primary { background: var(--p3-purple); color: var(--white); }
+.btn-primary:hover { background: var(--p3-purple-dark); }
+.btn-gold { background: var(--p3-gold); color: var(--white); }
+.btn-gold:hover { background: #b88a14; }
+
+/* === QUIZ WELCOME === */
+.quiz-app { display: block; }
+.welcome-screen { max-width: 600px; margin: 0 auto; padding: 60px 20px; text-align: center; }
+.welcome-screen h1 { font-size: 1.8rem; font-weight: 800; color: var(--p3-purple); margin-bottom: 8px; }
+.welcome-screen .subtitle { color: var(--gray-500); font-size: 1rem; margin-bottom: 32px; }
+.info-card { background: var(--white); border-radius: 14px; padding: 28px; border: 1px solid var(--gray-200); text-align: left; margin-bottom: 24px; }
+.info-card h3 { font-size: 0.9rem; font-weight: 700; color: var(--gray-800); margin-bottom: 14px; }
+.info-card ul { list-style: none; }
+.info-card li { padding: 8px 0; padding-left: 28px; position: relative; font-size: 0.9rem; color: var(--gray-600); }
+.info-card li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+.info-meta { display: flex; justify-content: space-between; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--gray-200); }
+.info-meta div { text-align: center; }
+.info-meta div span { display: block; font-size: 1.4rem; font-weight: 700; color: var(--p3-purple); }
+.info-meta div label { font-size: 0.7rem; color: var(--gray-400); text-transform: uppercase; font-weight: 600; }
+
+
+/* === TRAINING DASHBOARD === */
+.dashboard-screen {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px 24px;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--p3-purple);
+  margin-bottom: 8px;
+}
+
+.dashboard-header p {
+  color: var(--gray-500);
+  font-size: 1rem;
+}
+
+.module-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 22px;
+}
+
+.module-dashboard-card {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 18px;
+  padding: 28px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.module-dashboard-card:hover {
+  transform: translateY(-6px);
+  border-color: var(--p3-purple);
+  box-shadow: 0 18px 40px rgba(107,31,122,0.12);
+}
+
+.module-dashboard-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, var(--p3-purple), var(--p3-gold));
+}
+
+.module-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin-bottom: 18px;
+  background: var(--p3-purple-light);
+}
+
+.module-dashboard-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 10px;
+}
+
+.module-dashboard-card p {
+  font-size: 0.9rem;
+  color: var(--gray-500);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+.module-dashboard-card button {
+  width: 100%;
+}
+
+
+/* === QUIZ INTERFACE === */
+.quiz-interface { max-width: 720px; margin: 0 auto; padding: 24px 20px; }
+.quiz-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.quiz-top .title { font-weight: 700; color: var(--p3-purple); font-size: 0.95rem; }
+.quiz-timer { display: flex; align-items: center; gap: 6px; background: var(--white); padding: 8px 16px; border-radius: 8px; border: 1.5px solid var(--gray-200); font-weight: 700; font-size: 0.9rem; color: var(--gray-700); }
+.quiz-timer.warning { color: var(--red); border-color: var(--red); background: var(--red-light); }
+
+.progress-dots { display: flex; gap: 5px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center; }
+.progress-dots .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gray-200); cursor: pointer; transition: all 0.2s; }
+.progress-dots .dot.active { background: var(--p3-purple); transform: scale(1.3); }
+.progress-dots .dot.answered { background: var(--green); }
+.progress-dots .dot.flagged { background: var(--p3-gold); }
+
+.question-box { background: var(--white); border-radius: 14px; padding: 28px; border: 1.5px solid var(--gray-200); margin-bottom: 16px; }
+.q-num { font-size: 0.7rem; font-weight: 700; color: var(--p3-purple); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.q-text { font-size: 1.05rem; font-weight: 600; color: var(--gray-800); margin-bottom: 20px; }
+
+.options { display: flex; flex-direction: column; gap: 10px; }
+.option { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 10px; border: 2px solid var(--gray-200); cursor: pointer; transition: all 0.15s; font-size: 0.95rem; background: var(--white); }
+.option:hover { border-color: var(--p3-purple); background: var(--p3-purple-light); }
+.option.correct { border-color: var(--green) !important; background: var(--green-light) !important; }
+.option.wrong { border-color: var(--red) !important; background: var(--red-light) !important; }
+.option input { accent-color: var(--p3-purple); width: 18px; height: 18px; cursor: pointer; }
+
+.quiz-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+.btn-nav { padding: 10px 24px; border-radius: 8px; border: 1.5px solid var(--gray-300); background: var(--white); color: var(--gray-700); font-weight: 600; cursor: pointer; font-family: inherit; }
+.btn-nav:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-flag { padding: 10px 16px; border-radius: 8px; border: 1.5px solid var(--p3-gold); background: var(--p3-gold-light); color: var(--p3-gold); font-weight: 600; cursor: pointer; font-family: inherit; }
+
+/* === RESULTS === */
+.result-screen { max-width: 500px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+.result-circle { width: 150px; height: 150px; border-radius: 50%; background: linear-gradient(135deg, var(--p3-purple), var(--p3-gold)); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; color: var(--white); font-size: 2.2rem; font-weight: 800; }
+.result-screen h2 { font-size: 1.4rem; font-weight: 700; color: var(--gray-900); margin-bottom: 6px; }
+.result-status { font-size: 1rem; font-weight: 600; margin-bottom: 24px; }
+.result-status.pass { color: var(--green); }
+.result-status.fail { color: var(--red); }
+.result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+.result-item { background: var(--white); border-radius: 10px; padding: 16px; border: 1px solid var(--gray-200); }
+.result-item span { display: block; font-size: 1.3rem; font-weight: 700; color: var(--p3-purple); }
+.result-item label { font-size: 0.7rem; color: var(--gray-400); text-transform: uppercase; font-weight: 600; }
+
+/* === ADMIN DASHBOARD === */
+.admin-app { display: none; }
+.admin-layout { display: flex; min-height: 100vh; }
+.admin-sidebar { width: 240px; background: var(--white); border-right: 1px solid var(--gray-200); position: fixed; height: 100vh; }
+.admin-brand { padding: 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 12px; }
+.admin-brand img { width: 40px; height: 40px; }
+.admin-brand h3 { font-size: 0.95rem; font-weight: 700; color: var(--p3-purple); }
+.admin-brand p { font-size: 0.7rem; color: var(--gray-400); }
+.admin-nav { padding: 16px 12px; }
+.admin-nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: 500; color: var(--gray-600); margin-bottom: 2px; }
+.admin-nav-item:hover { background: var(--gray-100); }
+.admin-nav-item.active { background: var(--p3-purple-light); color: var(--p3-purple); font-weight: 600; }
+.admin-main { flex: 1; margin-left: 240px; }
+.admin-topbar { height: 60px; background: var(--white); border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; position: sticky; top: 0; z-index: 10; }
+.admin-topbar h2 { font-size: 1.1rem; font-weight: 700; color: var(--gray-900); }
+.admin-content { padding: 24px; }
+
+.kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-bottom: 24px; }
+.kpi { background: var(--white); border-radius: 12px; padding: 20px; border: 1px solid var(--gray-200); }
+.kpi-label { font-size: 0.75rem; font-weight: 600; color: var(--gray-400); text-transform: uppercase; margin-bottom: 8px; }
+.kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--gray-900); }
+.kpi-change { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
+.kpi-change.up { color: var(--green); }
+.kpi-change.down { color: var(--red); }
+
+.admin-section { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-200); margin-bottom: 20px; }
+.admin-section-header { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center; }
+.admin-section-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
+.admin-section-body { padding: 16px 20px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th { text-align: left; padding: 10px 12px; font-size: 0.7rem; font-weight: 700; color: var(--gray-400); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--gray-200); }
+td { padding: 12px; border-bottom: 1px solid var(--gray-100); color: var(--gray-700); }
+tr:hover td { background: var(--gray-50); cursor: pointer; }
+
+.user-cell { display: flex; align-items: center; gap: 10px; }
+.avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--p3-purple), var(--p3-gold)); display: flex; align-items: center; justify-content: center; color: var(--white); font-weight: 700; font-size: 0.75rem; }
+.status { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 0.7rem; font-weight: 700; }
+.status.pass { background: var(--green-light); color: var(--green); }
+.status.fail { background: var(--red-light); color: var(--red); }
+.status.pending { background: var(--p3-gold-light); color: var(--p3-gold); }
+.status.active { background: var(--p3-purple-light); color: var(--p3-purple); }
+
+.score-bar { display: flex; align-items: center; gap: 8px; }
+.score-bar .track { flex: 1; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden; }
+.score-bar .fill { height: 100%; border-radius: 3px; }
+.score-bar .fill.green { background: var(--green); }
+.score-bar .fill.red { background: var(--red); }
+.score-bar .fill.purple { background: var(--p3-purple); }
+.score-text { font-size: 0.8rem; font-weight: 700; min-width: 36px; }
+
+.chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-box { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-200); padding: 20px; }
+.chart-box h4 { font-size: 0.85rem; font-weight: 700; color: var(--gray-700); margin-bottom: 16px; }
+
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-row .label { width: 80px; font-size: 0.75rem; color: var(--gray-500); text-align: right; }
+.bar-row .track { flex: 1; height: 24px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+.bar-row .fill { height: 100%; border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; color: var(--white); font-size: 0.7rem; font-weight: 700; }
+.bar-row .fill.purple { background: var(--p3-purple); }
+.bar-row .fill.gold { background: var(--p3-gold); }
+.bar-row .fill.green { background: var(--green); }
+
+.donut-wrap { display: flex; align-items: center; justify-content: center; gap: 24px; }
+.donut { width: 130px; height: 130px; border-radius: 50%; background: var(--gray-200); position: relative; }
+.donut::after { content: none; }
+.legend { display: flex; flex-direction: column; gap: 8px; }
+.legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+.legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+/* Module Performance Cards */
+.module-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 20px; }
+.module-card { background: var(--white); border-radius: 12px; border: 1px solid var(--gray-200); padding: 20px; }
+.module-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.module-card-header h4 { font-size: 0.95rem; font-weight: 700; color: var(--gray-800); }
+.module-card-header .module-score { font-size: 1.3rem; font-weight: 700; color: var(--p3-purple); }
+.module-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.module-stat { text-align: center; padding: 10px; background: var(--gray-50); border-radius: 8px; }
+.module-stat span { display: block; font-size: 1.1rem; font-weight: 700; color: var(--gray-800); }
+.module-stat label { font-size: 0.65rem; color: var(--gray-400); text-transform: uppercase; font-weight: 600; }
+.module-bar { height: 8px; background: var(--gray-100); border-radius: 4px; overflow: hidden; }
+.module-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+
+.hidden { display: none !important; }
+
+/* === ADMIN LOGIN MODAL === */
+.admin-login-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(4px);
+  align-items: center; justify-content: center;
+}
+.admin-login-overlay.active { display: flex; }
+.admin-login-modal {
+  background: var(--white);
+  border-radius: 18px;
+  padding: 44px 40px 36px;
+  width: 100%; max-width: 400px;
+  box-shadow: 0 24px 60px rgba(107,31,122,0.22);
+  text-align: center;
+  position: relative;
+  animation: slideUp 0.25s ease;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.admin-login-modal .lock-icon {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p3-purple), var(--p3-gold));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; margin: 0 auto 18px;
+}
+.admin-login-modal h2 { font-size: 1.25rem; font-weight: 700; color: var(--p3-purple); margin-bottom: 4px; }
+.admin-login-modal p  { font-size: 0.82rem; color: var(--gray-400); margin-bottom: 24px; }
+.admin-login-modal .form-group { text-align: left; margin-bottom: 14px; }
+.admin-login-error {
+  font-size: 0.82rem; color: var(--red);
+  background: var(--red-light); border-radius: 8px;
+  padding: 8px 12px; margin-bottom: 14px; display: none;
+}
+.admin-login-cancel {
+  margin-top: 12px; font-size: 0.82rem; color: var(--gray-400);
+  cursor: pointer; background: none; border: none; font-family: inherit;
+}
+.admin-login-cancel:hover { color: var(--gray-600); }
+
+@media (max-width: 768px) {
+  .admin-sidebar { display: none; }
+  .admin-main { margin-left: 0; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .chart-row { grid-template-columns: 1fr; }
+  .module-grid { grid-template-columns: 1fr; }
+  .module-dashboard-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 1024px) {
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .kpi-row { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* Live pulse animation for active badge */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+/* Batch results table per module */
+.module-tag { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.72rem; font-weight:700; }
+</style>
+</head>
+<body>
+
+<!-- ==================== MODE SELECTOR ==================== -->
+<div id="modeSelect" style="position:fixed;top:16px;right:16px;z-index:999;">
+  <select id="modeSwitch" onchange="switchMode(this.value)" style="padding:8px 12px;border-radius:8px;border:1.5px solid var(--p3-purple);font-family:inherit;font-weight:600;color:var(--p3-purple);background:var(--white);cursor:pointer;">
+    <option value="home">🏠 Home</option>
+    <option value="trainee">Trainee View</option>
+    <option value="admin">Admin Dashboard</option>
+  </select>
+</div>
+
+<!-- Firebase Status Banner -->
+<div id="fbStatusBanner" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;font-family:inherit;box-shadow:0 4px 20px rgba(0,0,0,0.15);transition:all 0.3s;"></div>
+
+<!-- ==================== TRAINEE APP ==================== -->
+<div id="traineeApp" class="quiz-app">
+
+<!-- LOGIN -->
+<div id="loginScreen" class="login-screen">
+  <div class="login-card">
+    <div style="width:80px;height:80px;margin:0 auto 20px;border-radius:16px;background:linear-gradient(135deg,var(--p3-purple),var(--p3-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.8rem;">P3</div>
+    <h1>P3 Healthcare</h1>
+    <p>CCM Training Quiz — Enter your details to begin</p>
+    <div class="form-group">
+      <label>Full Name</label>
+      <input type="text" id="traineeName" placeholder="Enter your full name">
+    </div>
+    <div class="form-group">
+      <label>Department</label>
+      <input type="text" id="traineeDept" placeholder="e.g. Sales Team">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:8px;" onclick="startTrainee()">Start Quiz</button>
+  </div>
+</div>
+
+
+<!-- TRAINING DASHBOARD -->
+<div id="dashboardScreen" class="dashboard-screen hidden">
+
+  <div class="dashboard-header">
+    <h1>Training Dashboard</h1>
+    <p>Select a training module to begin your learning journey</p>
+  </div>
+
+  <div class="module-dashboard-grid">
+
+    <div class="module-dashboard-card" onclick="openModule('CCM Fundamentals')">
+      <div class="module-icon">🏥</div>
+      <h3>CCM Fundamentals</h3>
+      <p>Learn Chronic Care Management workflows, patient qualification, monthly coordination, billing, and compliance.</p>
+      <button class="btn btn-primary">Start Module</button>
+    </div>
+
+    <div class="module-dashboard-card" onclick="openModule('PCM Fundamentals')">
+      <div class="module-icon">🩺</div>
+      <h3>PCM Fundamentals</h3>
+      <p>Understand Principal Care Management processes, care plans, provider coordination, and patient engagement.</p>
+      <button class="btn btn-primary">Start Module</button>
+    </div>
+
+    <div class="module-dashboard-card" onclick="openModule('RPM Fundamentals')">
+      <div class="module-icon">📡</div>
+      <h3>RPM Fundamentals</h3>
+      <p>Explore Remote Patient Monitoring devices, vitals tracking, patient onboarding, and compliance management.</p>
+      <button class="btn btn-primary">Start Module</button>
+    </div>
+
+    <div class="module-dashboard-card" onclick="openModule('General Sales Fundamentals')">
+      <div class="module-icon">💼</div>
+      <h3>General Sales Fundamentals</h3>
+      <p>Master healthcare sales communication, objection handling, lead qualification, and closing strategies.</p>
+      <button class="btn btn-primary">Start Module</button>
+    </div>
+
+    <div class="module-dashboard-card" onclick="openModule('Comprehensive Quiz')">
+      <div class="module-icon">📝</div>
+      <h3>A Comprehensive Quiz</h3>
+      <p>Test your complete understanding across CCM, PCM, RPM, and healthcare sales fundamentals.</p>
+      <button class="btn btn-gold">Start Assessment</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- WELCOME -->
+<div id="welcomeScreen" class="welcome-screen hidden">
+  <h1>CCM Fundamentals</h1>
+  <p class="subtitle">Test your knowledge of Chronic Care Management</p>
+  <div class="info-card">
+    <h3>Quiz Instructions</h3>
+    <ul>
+      <li id="infoQuestionCount">30 multiple choice questions</li>
+      <li>4 options per question — select one answer</li>
+      <li id="infoTimeLimit">20 minutes time limit</li>
+      <li>Passing score: 70%</li>
+      <li>Questions will be shuffled</li>
+      <li>Auto-submit when timer ends</li>
+      <li>Flag questions to review later</li>
+    </ul>
+    <div class="info-meta">
+      <div><span id="metaQuestions">30</span><label>Questions</label></div>
+      <div><span id="metaTime">20m</span><label>Time Limit</label></div>
+      <div><span>70%</span><label>Passing</label></div>
+    </div>
+  </div>
+  <button class="btn btn-primary" style="padding:14px 48px;font-size:1rem;" onclick="launchQuiz()">Start Quiz</button>
+</div>
+
+<!-- QUIZ INTERFACE -->
+<div id="quizInterface" class="quiz-interface hidden">
+  <div class="quiz-top">
+    <div class="title"><span id="quizModuleTitle">CCM Fundamentals</span> — <span id="traineeDisplayName" style="color:var(--gray-500);font-weight:500;"></span></div>
+    <div class="quiz-timer" id="quizTimer">⏱ 20:00</div>
+  </div>
+  <div class="progress-dots" id="progressDots"></div>
+  <div class="question-box" id="questionBox"></div>
+  <div class="quiz-nav">
+    <button class="btn-nav" id="prevBtn" onclick="prevQuestion()" disabled>← Previous</button>
+    <button class="btn-flag" id="flagBtn" onclick="toggleFlag()">🚩 Flag</button>
+    <button class="btn-nav btn-primary" style="border:none;color:white;" id="nextBtn" onclick="nextQuestion()">Next →</button>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div id="resultScreen" class="result-screen hidden">
+  <div class="result-circle" id="resultPercent">0%</div>
+  <h2 id="resultTitle">Quiz Completed!</h2>
+  <div class="result-status" id="resultStatus"></div>
+  <div class="result-grid">
+    <div class="result-item"><span id="resultCorrect">0</span><label>Correct</label></div>
+    <div class="result-item"><span id="resultWrong">0</span><label>Wrong</label></div>
+    <div class="result-item"><span id="resultTime">0:00</span><label>Time Taken</label></div>
+  </div>
+  <button class="btn btn-primary" style="margin-right:10px;" onclick="goBackToDashboard()">← Back to Modules</button>
+  <button class="btn btn-gold" onclick="retakeCurrentModule()">↺ Retake Quiz</button>
+</div>
+
+</div>
+
+
+<!-- ==================== MODULE PIN MODAL ==================== -->
+<div id="pinModalOverlay" class="admin-login-overlay">
+  <div class="admin-login-modal">
+    <div class="lock-icon" style="font-size:1.4rem;">🔢</div>
+    <h2 id="pinModalTitle">Module Access</h2>
+    <p>Enter the access PIN to start this quiz module</p>
+    <div id="pinError" class="admin-login-error">Incorrect PIN. Please try again.</div>
+    <div class="form-group">
+      <label>Access PIN</label>
+      <input type="password" id="modulePinInput" placeholder="Enter module PIN" maxlength="10" onkeydown="if(event.key==='Enter')verifyModulePin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="verifyModulePin()">Unlock Module</button>
+    <br>
+    <button class="admin-login-cancel" onclick="cancelPinModal()">← Back to Dashboard</button>
+  </div>
+</div>
+
+<!-- ==================== ADMIN LOGIN MODAL ==================== -->
+<div id="adminLoginOverlay" class="admin-login-overlay">
+  <div class="admin-login-modal">
+    <div class="lock-icon">🔐</div>
+    <h2>Admin Access</h2>
+    <p>Enter your administrator credentials to continue</p>
+    <div id="adminLoginError" class="admin-login-error">Incorrect username or password. Please try again.</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="adminUsername" placeholder="Enter admin username" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')verifyAdminLogin()">
+    </div>
+    <button class="btn btn-primary" style="width:100%;margin-top:6px;" onclick="verifyAdminLogin()">Sign In</button>
+    <br>
+    <button class="admin-login-cancel" onclick="cancelAdminLogin()">← Back to Trainee View</button>
+  </div>
+</div>
+
+<!-- ==================== ADMIN DASHBOARD ==================== -->
+<div id="adminApp" class="admin-app">
+<div class="admin-layout">
+
+<aside class="admin-sidebar">
+  <div class="admin-brand">
+    <div style="width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,var(--p3-purple),var(--p3-gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:800;">P3</div>
+    <div><h3>P3 Healthcare</h3><p>Admin Panel</p></div>
+  </div>
+  <nav class="admin-nav">
+    <div class="admin-nav-item active" onclick="showAdminTab('overview', this)">📊 Overview</div>
+    <div class="admin-nav-item" onclick="showAdminTab('live', this)">📡 Live Tracking</div>
+    <div class="admin-nav-item" onclick="showAdminTab('trainees', this)">👥 Trainees</div>
+    <div class="admin-nav-item" onclick="showAdminTab('quizzes', this)">📝 Quizzes</div>
+    <div class="admin-nav-item" onclick="showAdminTab('performance', this)">📈 Performance</div>
+    <div class="admin-nav-item" onclick="showAdminTab('batches', this)">📦 Batch Management</div>
+  </nav>
+</aside>
+
+<main class="admin-main">
+  <div class="admin-topbar">
+    <h2 id="adminPageTitle">Dashboard Overview</h2>
+    <div style="font-size:0.85rem;color:var(--gray-500);">Last updated: <span id="lastUpdatedTime">--</span></div>
+  </div>
+  <div class="admin-content">
+
+    <!-- OVERVIEW TAB -->
+    <div id="tab-overview" class="admin-tab">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">Total Trainees</div>
+          <div class="kpi-value" id="kpiTrainees">0</div>
+          <div class="kpi-change up" id="kpiTraineesTrend">Unique learners</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Total Attempts</div>
+          <div class="kpi-value" id="kpiAttempts">0</div>
+          <div class="kpi-change" id="kpiAttemptsTrend">All quizzes</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Avg Score</div>
+          <div class="kpi-value" id="kpiAvg">--</div>
+          <div class="kpi-change" id="kpiAvgTrend">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Pass Ratio</div>
+          <div class="kpi-value" id="kpiPass">--</div>
+          <div class="kpi-change" id="kpiPassTrend">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Best Score</div>
+          <div class="kpi-value" id="kpiBest">--</div>
+          <div class="kpi-change up" id="kpiBestHolder">--</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Completion Rate</div>
+          <div class="kpi-value" id="kpiCompletion">--</div>
+          <div class="kpi-change" id="kpiCompletionTrend">--</div>
+        </div>
+      </div>
+
+      <div class="chart-row">
+        <div class="chart-box">
+          <h4>Performance by Module</h4>
+          <div class="bar-chart">
+            <div class="bar-row"><div class="label">CCM</div><div class="track"><div class="fill purple" style="width:0%" id="barCCM">0%</div></div></div>
+            <div class="bar-row"><div class="label">PCM</div><div class="track"><div class="fill gold" style="width:0%" id="barPCM">--</div></div></div>
+            <div class="bar-row"><div class="label">RPM</div><div class="track"><div class="fill green" style="width:0%" id="barRPM">--</div></div></div>
+            <div class="bar-row"><div class="label">Sales</div><div class="track"><div class="fill purple" style="width:0%" id="barSales">--</div></div></div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <h4>Quiz Completion Status</h4>
+          <div class="donut-wrap">
+            <div class="donut" id="donutChart"><div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:var(--gray-400);">--</div></div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> Passed <span id="legendPassed" style="margin-left:4px;color:var(--gray-400);font-size:0.75rem;">0 trainees</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> Failed <span id="legendFailed" style="margin-left:4px;color:var(--gray-400);font-size:0.75rem;">0 trainees</span></div>
+              <div class="legend-item"><div class="legend-dot" style="background:var(--p3-gold)"></div> Pending <span id="legendPending" style="margin-left:4px;color:var(--gray-400);font-size:0.75rem;">0 trainees</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Performers & Struggling Trainees -->
+      <div class="chart-row" style="margin-bottom:20px;">
+        <div class="chart-box">
+          <h4>🏆 Top Performers</h4>
+          <div id="topPerformersList" style="display:flex;flex-direction:column;gap:10px;">
+            <div style="text-align:center;color:var(--gray-400);padding:20px;">No data yet</div>
+          </div>
+        </div>
+        <div class="chart-box">
+          <h4>⚠️ Needs Attention</h4>
+          <div id="strugglingTraineesList" style="display:flex;flex-direction:column;gap:10px;">
+            <div style="text-align:center;color:var(--gray-400);padding:20px;">No struggling trainees</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Time-based Analytics -->
+      <div class="admin-section" style="margin-bottom:20px;">
+        <div class="admin-section-header">
+          <h3>📅 Performance Over Time</h3>
+          <span style="font-size:0.8rem;color:var(--gray-400);">Daily average scores and pass rates</span>
+        </div>
+        <div class="admin-section-body">
+          <div id="timeAnalyticsChart" style="display:flex;flex-direction:column;gap:8px;">
+            <div style="text-align:center;color:var(--gray-400);padding:20px;">No time-based data available</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>Recent Quiz Results</h3>
+          <div style="display:flex;gap:8px;">
+            <span style="font-size:0.8rem;color:var(--gray-400);">Click any row for details</span>
+            <button class="btn-nav" onclick="exportResultsToCSV()" style="padding:6px 14px;font-size:0.8rem;color:var(--p3-purple);border-color:var(--p3-purple);">📥 Export CSV</button>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Trainee</th><th>Department</th><th>Module</th><th>Score</th><th>Status</th><th>Time</th><th>Date</th></tr>
+            </thead>
+            <tbody id="resultsTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIVE TRACKING TAB -->
+    <div id="tab-live" class="admin-tab hidden">
+      <!-- Live Stats Row -->
+      <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+        <div class="kpi">
+          <div class="kpi-label">🔴 Active Sessions</div>
+          <div class="kpi-value" id="liveActiveCount" style="color:var(--p3-purple);">0</div>
+          <div class="kpi-change" id="liveLastRefresh" style="color:var(--gray-400);">Auto-refreshes every 3s</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Avg Progress</div>
+          <div class="kpi-value" id="liveAvgProgress">--</div>
+          <div class="kpi-change">Questions answered</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Avg Live Score</div>
+          <div class="kpi-value" id="liveAvgScore">--</div>
+          <div class="kpi-change">Current accuracy</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Completed Today</div>
+          <div class="kpi-value" id="liveCompletedToday">0</div>
+          <div class="kpi-change up" id="liveCompletedPassRate">-- pass rate</div>
+        </div>
+      </div>
+
+      <div class="admin-section">
+        <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3>🔴 Live Quiz Tracking</h3>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:0.8rem;color:var(--gray-400);" id="liveTimestamp">--</span>
+            <span class="status active" id="liveCount"><span class="live-pulse">●</span> 0 Active</span>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Trainee</th><th>Department</th><th>Module</th><th>Progress</th><th>Live Score</th><th>Time Elapsed</th><th>Status</th></tr>
+            </thead>
+            <tbody id="liveTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Completed Today Section -->
+      <div class="admin-section" style="margin-top:20px;">
+        <div class="admin-section-header"><h3>✅ Completed Today</h3></div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Trainee</th><th>Department</th><th>Module</th><th>Score</th><th>Status</th><th>Time</th></tr>
+            </thead>
+            <tbody id="liveCompletedTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRAINEES TAB -->
+    <div id="tab-trainees" class="admin-tab hidden">
+      <div class="admin-section">
+        <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+          <h3>All Trainees</h3>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="text" id="traineeSearch" placeholder="🔍 Search trainees..." oninput="filterTraineesTable()" style="padding:8px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.85rem;outline:none;width:180px;">
+            <select id="traineeFilterStatus" onchange="filterTraineesTable()" style="padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.85rem;outline:none;background:var(--white);">
+              <option value="all">All Status</option>
+              <option value="pass">Passed</option>
+              <option value="fail">Failed</option>
+            </select>
+            <select id="traineeSort" onchange="filterTraineesTable()" style="padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.85rem;outline:none;background:var(--white);">
+              <option value="recent">Most Recent</option>
+              <option value="score-high">Score: High to Low</option>
+              <option value="score-low">Score: Low to High</option>
+              <option value="name">Name A-Z</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Trainee</th><th>Department</th><th>Batch</th><th>Best Score</th><th>Attempts</th><th>Status</th><th>Last Attempt</th></tr>
+            </thead>
+            <tbody id="traineesTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZZES TAB -->
+    <div id="tab-quizzes" class="admin-tab hidden">
+      <div class="admin-section">
+        <div class="admin-section-header"><h3>Quiz Management</h3></div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Quiz Name</th><th>Module</th><th>Questions</th><th>Total Attempts</th><th>Pass Rate</th><th>Avg Score</th><th>Status</th></tr>
+            </thead>
+            <tbody id="quizzesTableBody">
+              <tr><td><strong>CCM Fundamentals</strong></td><td>CCM</td><td>30</td><td id="quizAttemptsCCM">0</td><td id="quizPassRateCCM">--</td><td id="quizAvgCCM">--</td><td><span class="status pass">Active</span></td></tr>
+              <tr><td><strong>PCM Fundamentals</strong></td><td>PCM</td><td>30</td><td id="quizAttemptsPCM">0</td><td id="quizPassRatePCM">--</td><td id="quizAvgPCM">--</td><td><span class="status pass">Active</span></td></tr>
+              <tr><td><strong>RPM Fundamentals</strong></td><td>RPM</td><td>30</td><td id="quizAttemptsRPM">0</td><td id="quizPassRateRPM">--</td><td id="quizAvgRPM">--</td><td><span class="status pass">Active</span></td></tr>
+              <tr><td><strong>General Sales Fundamentals</strong></td><td>Sales</td><td>30</td><td id="quizAttemptsSales">0</td><td id="quizPassRateSales">--</td><td id="quizAvgSales">--</td><td><span class="status pass">Active</span></td></tr>
+              <tr><td><strong>Comprehensive Assessment</strong></td><td>All</td><td>60</td><td id="quizAttemptsComprehensive">0</td><td id="quizPassRateComprehensive">--</td><td id="quizAvgComprehensive">--</td><td><span class="status pass">Active</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE TAB -->
+    <div id="tab-performance" class="admin-tab hidden">
+
+      <!-- Module Trend KPIs -->
+      <div class="kpi-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px;">
+        <div class="kpi">
+          <div class="kpi-label">CCM Trend</div>
+          <div class="kpi-value" id="trendCCM" style="font-size:1.2rem;">--</div>
+          <div class="kpi-change" id="trendCCMDir">No data</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">PCM Trend</div>
+          <div class="kpi-value" id="trendPCM" style="font-size:1.2rem;">--</div>
+          <div class="kpi-change" id="trendPCMDir">No data</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">RPM Trend</div>
+          <div class="kpi-value" id="trendRPM" style="font-size:1.2rem;">--</div>
+          <div class="kpi-change" id="trendRPMDir">No data</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Sales Trend</div>
+          <div class="kpi-value" id="trendSales" style="font-size:1.2rem;">--</div>
+          <div class="kpi-change" id="trendSalesDir">No data</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Comprehensive</div>
+          <div class="kpi-value" id="trendComprehensive" style="font-size:1.2rem;">--</div>
+          <div class="kpi-change" id="trendComprehensiveDir">No data</div>
+        </div>
+      </div>
+
+      <!-- Module Performance Cards -->
+      <div class="module-grid">
+        <div class="module-card">
+          <div class="module-card-header">
+            <h4>🏥 CCM — Chronic Care Management</h4>
+            <div class="module-score" id="perfCCMScore">--</div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat"><span id="perfCCMAttempts">0</span><label>Attempts</label></div>
+            <div class="module-stat"><span id="perfCCMPass">--</span><label>Pass Rate</label></div>
+            <div class="module-stat"><span id="perfCCMAvg">--</span><label>Avg Score</label></div>
+          </div>
+          <div class="module-bar"><div class="module-bar-fill" id="perfCCMBar" style="width:0%;background:var(--p3-purple)"></div></div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header">
+            <h4>🩺 PCM — Primary Care Management</h4>
+            <div class="module-score" id="perfPCMScore">--</div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat"><span id="perfPCMAttempts">0</span><label>Attempts</label></div>
+            <div class="module-stat"><span id="perfPCMPass">--</span><label>Pass Rate</label></div>
+            <div class="module-stat"><span id="perfPCMAvg">--</span><label>Avg Score</label></div>
+          </div>
+          <div class="module-bar"><div class="module-bar-fill" id="perfPCMBar" style="width:0%;background:var(--p3-gold)"></div></div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header">
+            <h4>📡 RPM — Remote Patient Monitoring</h4>
+            <div class="module-score" id="perfRPMScore">--</div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat"><span id="perfRPMAttempts">0</span><label>Attempts</label></div>
+            <div class="module-stat"><span id="perfRPMPass">--</span><label>Pass Rate</label></div>
+            <div class="module-stat"><span id="perfRPMAvg">--</span><label>Avg Score</label></div>
+          </div>
+          <div class="module-bar"><div class="module-bar-fill" id="perfRPMBar" style="width:0%;background:var(--green)"></div></div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header">
+            <h4>💼 Sales Training</h4>
+            <div class="module-score" id="perfSalesScore">--</div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat"><span id="perfSalesAttempts">0</span><label>Attempts</label></div>
+            <div class="module-stat"><span id="perfSalesPass">--</span><label>Pass Rate</label></div>
+            <div class="module-stat"><span id="perfSalesAvg">--</span><label>Avg Score</label></div>
+          </div>
+          <div class="module-bar"><div class="module-bar-fill" id="perfSalesBar" style="width:0%;background:var(--red)"></div></div>
+        </div>
+
+        <div class="module-card">
+          <div class="module-card-header">
+            <h4>📝 Comprehensive Assessment</h4>
+            <div class="module-score" id="perfComprehensiveScore">--</div>
+          </div>
+          <div class="module-stats">
+            <div class="module-stat"><span id="perfComprehensiveAttempts">0</span><label>Attempts</label></div>
+            <div class="module-stat"><span id="perfComprehensivePass">--</span><label>Pass Rate</label></div>
+            <div class="module-stat"><span id="perfComprehensiveAvg">--</span><label>Avg Score</label></div>
+          </div>
+          <div class="module-bar"><div class="module-bar-fill" id="perfComprehensiveBar" style="width:0%;background:var(--p3-purple-dark)"></div></div>
+        </div>
+      </div>
+
+      <!-- Performance Comparison Chart -->
+      <div class="admin-section">
+        <div class="admin-section-header"><h3>Module Performance Comparison</h3></div>
+        <div class="admin-section-body">
+          <div class="bar-chart">
+            <div class="bar-row">
+              <div class="label" style="width:100px;">CCM</div>
+              <div class="track"><div class="fill purple" style="width:0%" id="compCCM">0%</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">PCM</div>
+              <div class="track"><div class="fill gold" style="width:0%" id="compPCM">0%</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">RPM</div>
+              <div class="track"><div class="fill green" style="width:0%" id="compRPM">0%</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">Sales</div>
+              <div class="track"><div class="fill" style="width:0%;background:var(--red)" id="compSales">0%</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">Comprehensive</div>
+              <div class="track"><div class="fill" style="width:0%;background:var(--p3-purple-dark)" id="compComprehensive">0%</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weak Areas -->
+      <div class="admin-section">
+        <div class="admin-section-header"><h3>Weak Areas by Module</h3></div>
+        <div class="admin-section-body">
+          <table>
+            <thead>
+              <tr><th>Module</th><th>Topic</th><th>Avg Score</th><th>Trainees Struggling</th><th>Action</th></tr>
+            </thead>
+            <tbody id="weakAreasTable">
+              <tr><td>CCM</td><td>Qualification Criteria</td><td><span style="color:var(--red);font-weight:700">62%</span></td><td>8 trainees</td><td><span class="status pending">Retrain</span></td></tr>
+              <tr><td>CCM</td><td>Billing/Coding</td><td><span style="color:var(--p3-gold);font-weight:700">71%</span></td><td>5 trainees</td><td><span class="status pending">Review</span></td></tr>
+              <tr><td>PCM</td><td>Care Plans</td><td><span style="color:var(--gray-400);font-weight:700">--</span></td><td>--</td><td><span class="status">No data</span></td></tr>
+              <tr><td>RPM</td><td>Device Setup</td><td><span style="color:var(--gray-400);font-weight:700">--</span></td><td>--</td><td><span class="status">No data</span></td></tr>
+              <tr><td>Sales</td><td>Objection Handling</td><td><span style="color:var(--gray-400);font-weight:700">--</span></td><td>--</td><td><span class="status">No data</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- BATCH MANAGEMENT TAB -->
+    <div id="tab-batches" class="admin-tab hidden">
+
+      <!-- Batch Creation Card -->
+      <div class="admin-section" style="margin-bottom:20px;">
+        <div class="admin-section-header">
+          <h3>📦 Create New Batch</h3>
+        </div>
+        <div class="admin-section-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr auto;gap:12px;align-items:end;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Batch Name</label>
+              <input type="text" id="newBatchName" placeholder="e.g. Batch D — Aug 2026" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Start Date</label>
+              <input type="date" id="newBatchStart" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">End Date</label>
+              <input type="date" id="newBatchEnd" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;outline:none;">
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Description</label>
+              <input type="text" id="newBatchDesc" placeholder="Optional description" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;outline:none;">
+            </div>
+            <button class="btn btn-primary" onclick="createNewBatch()" style="padding:10px 20px;height:42px;">Create Batch</button>
+          </div>
+          <div id="batchCreateError" style="display:none;margin-top:10px;padding:8px 12px;background:var(--red-light);color:var(--red);border-radius:8px;font-size:0.85rem;font-weight:500;"></div>
+        </div>
+      </div>
+
+      <!-- Batch Overview Cards -->
+      <div class="admin-section" style="margin-bottom:20px;">
+        <div class="admin-section-header">
+          <h3>📊 Batch Overview</h3>
+          <span style="font-size:0.8rem;color:var(--gray-400);">Click a batch to view details</span>
+        </div>
+        <div class="admin-section-body">
+          <div id="batchCardsGrid" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:16px;">
+            <!-- Batch cards injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Batch Detail View -->
+      <div id="batchDetailView" class="admin-section hidden" style="margin-bottom:20px;">
+        <div class="admin-section-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h3 id="batchDetailTitle">Batch Details</h3>
+          <div style="display:flex;gap:8px;">
+            <button class="btn-nav" onclick="exportBatchReport(currentBatchId)" style="padding:6px 14px;font-size:0.8rem;color:var(--p3-purple);border-color:var(--p3-purple);">📥 Export Report</button>
+            <button class="btn-nav" onclick="closeBatchDetail()" style="padding:6px 14px;font-size:0.8rem;">← Back to Batches</button>
+            <button class="btn-nav" onclick="deleteCurrentBatch()" style="padding:6px 14px;font-size:0.8rem;color:var(--red);border-color:var(--red);">🗑 Delete Batch</button>
+          </div>
+        </div>
+        <div class="admin-section-body">
+          <!-- Batch Stats Row -->
+          <div class="kpi-row" style="grid-template-columns:repeat(5, 1fr);margin-bottom:20px;">
+            <div class="kpi">
+              <div class="kpi-label">Total Trainees</div>
+              <div class="kpi-value" id="bdTotal">0</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Avg Score</div>
+              <div class="kpi-value" id="bdAvg">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Pass Rate</div>
+              <div class="kpi-value" id="bdPass">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Top Score</div>
+              <div class="kpi-value" id="bdTop">--</div>
+            </div>
+            <div class="kpi">
+              <div class="kpi-label">Low Score</div>
+              <div class="kpi-value" id="bdLow">--</div>
+            </div>
+          </div>
+
+          <!-- Trainees in Batch -->
+          <h4 style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:12px;">👥 Trainees in This Batch</h4>
+          <table style="margin-bottom:20px;">
+            <thead>
+              <tr><th>Trainee</th><th>Department</th><th>Score</th><th>Status</th><th>Quiz Attempts</th><th>Last Attempt</th><th>Action</th></tr>
+            </thead>
+            <tbody id="batchTraineesTable"></tbody>
+          </table>
+
+          <!-- Assign Trainee to Batch -->
+          <h4 style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:12px;">➕ Assign Trainee to This Batch</h4>
+          <div style="display:flex;gap:12px;align-items:end;margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:0;flex:1;">
+              <label style="display:block;font-size:0.75rem;font-weight:600;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Select Trainee</label>
+              <select id="assignTraineeSelect" style="width:100%;padding:10px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:0.9rem;outline:none;background:var(--white);">
+                <option value="">-- Select a trainee --</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" onclick="assignSelectedTrainee()" style="padding:10px 20px;height:42px;">Assign</button>
+          </div>
+
+          <!-- Batch Performance Chart -->
+          <h4 style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:12px;">📈 Score Distribution</h4>
+          <div class="bar-chart" id="batchScoreDistribution">
+            <div class="bar-row">
+              <div class="label" style="width:100px;">90-100%</div>
+              <div class="track"><div class="fill green" style="width:0%" id="bdDist90">0</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">80-89%</div>
+              <div class="track"><div class="fill purple" style="width:0%" id="bdDist80">0</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">70-79%</div>
+              <div class="track"><div class="fill gold" style="width:0%" id="bdDist70">0</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">60-69%</div>
+              <div class="track"><div class="fill" style="width:0%;background:var(--p3-gold-light);color:var(--gray-600);" id="bdDist60">0</div></div>
+            </div>
+            <div class="bar-row">
+              <div class="label" style="width:100px;">Below 60%</div>
+              <div class="track"><div class="fill red" style="width:0%" id="bdDist50">0</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Batches Comparison -->
+      <div class="admin-section">
+        <div class="admin-section-header"><h3>📊 Batch Performance Comparison</h3></div>
+        <div class="admin-section-body">
+          <div class="bar-chart" id="batchComparisonChart">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+</div>
+</div>
+
+<script>
+
+// ==================== FIREBASE HELPERS ====================
+// In-memory caches (updated by Firestore real-time listeners)
+let _cachedBatches = [];
+let _cachedTraineeBatchMap = {};
+
+// Wire up Firebase as soon as the module script signals it is ready.
+// The module script dispatches 'firebase-ready' on document; we listen here.
+// If Firebase was already initialised before this script ran (e.g. inlined module
+// resolved synchronously), fall back to checking window._fbReady directly.
+(function wireFirebase() {
+  function onFirebaseReady() {
+    if (!window._fb) return; // safety guard
+    initFirebaseListeners();
+    initDemoBatches();
+  }
+
+  if (window._fbReady) {
+    // Module already resolved — call immediately (deferred so DOM is ready)
+    setTimeout(onFirebaseReady, 0);
+  } else {
+    document.addEventListener('firebase-ready', onFirebaseReady, { once: true });
+  }
+})();
+
+function showFbBanner(msg, type = 'info') {
+  const el = document.getElementById('fbStatusBanner');
+  if (!el) return;
+  const styles = {
+    info:    'background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc;',
+    success: 'background:var(--green-light);color:var(--green);border:1px solid #86efac;',
+    error:   'background:var(--red-light);color:var(--red);border:1px solid #fca5a5;',
+    warn:    'background:var(--p3-gold-light);color:#92400e;border:1px solid var(--p3-gold);'
+  };
+  el.setAttribute('style', `display:block;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 20px;border-radius:10px;font-size:0.82rem;font-weight:600;font-family:inherit;box-shadow:0 4px 20px rgba(0,0,0,0.15);${styles[type]||styles.info}`);
+  el.textContent = msg;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function fbReady() {
+  return window._fbReady && window._fb;
+}
+
+// ==================== BATCH MANAGEMENT (Firebase) ====================
+function getBatches() { return _cachedBatches; }
+function getTraineeBatchMap() { return _cachedTraineeBatchMap; }
+
+// Firestore listeners for batches and trainee-batch map (set up after firebase-ready)
+function initFirebaseListeners() {
+  const { db, doc, collection, onSnapshot, query, orderBy } = window._fb;
+
+  // Listen to batches collection
+  onSnapshot(collection(db, 'p3_batches'), snap => {
+    _cachedBatches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Refresh any visible batch UI
+    if (typeof renderBatchCards === 'function') renderBatchCards();
+    if (typeof renderBatchComparison === 'function') renderBatchComparison();
+  }, err => console.warn('Batch listener error:', err));
+
+  // Listen to trainee-batch map (single doc)
+  onSnapshot(doc(db, 'p3_meta', 'trainee_batch_map'), snap => {
+    _cachedTraineeBatchMap = snap.exists() ? (snap.data() || {}) : {};
+  }, err => console.warn('TraineeBatch listener error:', err));
+
+  // Listen to quiz results for real-time admin dashboard
+  const resultsQ = query(collection(db, 'p3_results'), orderBy('id', 'asc'));
+  onSnapshot(resultsQ, snap => {
+    allResults = snap.docs.map(d => d.data());
+    // Recompute moduleData
+    moduleData = {
+      CCM: { attempts: 0, scores: [], passed: 0 },
+      PCM: { attempts: 0, scores: [], passed: 0 },
+      RPM: { attempts: 0, scores: [], passed: 0 },
+      Sales: { attempts: 0, scores: [], passed: 0 },
+      Comprehensive: { attempts: 0, scores: [], passed: 0 }
+    };
+    allResults.forEach(r => {
+      const mod = r.module || 'CCM';
+      if (moduleData[mod]) {
+        moduleData[mod].attempts++;
+        moduleData[mod].scores.push(r.score);
+        if (r.passed) moduleData[mod].passed++;
+      }
+    });
+    // Refresh admin dashboard if open
+    const adminEl = document.getElementById('adminApp');
+    if (adminEl && adminEl.style.display !== 'none') {
+      if (currentAdminTab === 'overview') updateAdminDashboard();
+      if (currentAdminTab === 'trainees') updateTraineesTable();
+      if (currentAdminTab === 'quizzes') updateQuizzesTab();
+      if (currentAdminTab === 'performance') updatePerformanceTab();
+    }
+  }, err => console.warn('Results listener error:', err));
+
+  // Listen to live sessions
+  onSnapshot(collection(db, 'p3_live_sessions'), snap => {
+    // Merge into liveSessions cache
+    liveSessions = {};
+    snap.docs.forEach(d => { liveSessions[d.id] = d.data(); });
+    const adminEl = document.getElementById('adminApp');
+    if (adminEl && adminEl.style.display !== 'none') {
+      updateLiveTable();
+    }
+  }, err => console.warn('Live sessions listener error:', err));
+
+  showFbBanner('🔥 Firebase connected — live sync active', 'success');
+}
+
+async function saveBatches(batches) {
+  if (!fbReady()) { return; } // cache already updated via listener
+  // Batches are stored as individual Firestore docs
+  // This is a no-op for direct saves; use createBatch / deleteBatch instead
+}
+
+async function saveTraineeBatchMap(map) {
+  if (!fbReady()) { _cachedTraineeBatchMap = map; return; }
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'p3_meta', 'trainee_batch_map'), map);
+  } catch(e) { showFbBanner('⚠️ Failed to save trainee assignments', 'error'); }
+}
+
+async function createBatch(name, description, startDate, endDate) {
+  const newBatch = {
+    id: 'batch_' + Date.now(),
+    name: name,
+    description: description || '',
+    startDate: startDate || new Date().toISOString().split('T')[0],
+    endDate: endDate || '',
+    createdAt: new Date().toISOString(),
+    traineeCount: 0
+  };
+  if (fbReady()) {
+    const { db, doc, setDoc } = window._fb;
+    try {
+      await setDoc(doc(db, 'p3_batches', newBatch.id), newBatch);
+    } catch(e) { showFbBanner('⚠️ Failed to create batch', 'error'); }
+  } else {
+    _cachedBatches.push(newBatch);
+  }
+  return newBatch;
+}
+
+async function deleteBatch(batchId) {
+  if (fbReady()) {
+    const { db, doc, deleteDoc } = window._fb;
+    try {
+      await deleteDoc(doc(db, 'p3_batches', batchId));
+      // Remove trainees from this batch
+      const map = { ..._cachedTraineeBatchMap };
+      for (const [trainee, bid] of Object.entries(map)) {
+        if (bid === batchId) delete map[trainee];
+      }
+      await saveTraineeBatchMap(map);
+    } catch(e) { showFbBanner('⚠️ Failed to delete batch', 'error'); }
+  } else {
+    _cachedBatches = _cachedBatches.filter(b => b.id !== batchId);
+    const map = { ..._cachedTraineeBatchMap };
+    for (const [t, bid] of Object.entries(map)) { if (bid === batchId) delete map[t]; }
+    _cachedTraineeBatchMap = map;
+  }
+}
+
+async function assignTraineeToBatch(traineeName, batchId) {
+  const map = { ..._cachedTraineeBatchMap, [traineeName]: batchId };
+  await saveTraineeBatchMap(map);
+  _cachedTraineeBatchMap = map;
+  updateBatchCounts();
+}
+
+async function removeTraineeFromBatch(traineeName) {
+  const map = { ..._cachedTraineeBatchMap };
+  delete map[traineeName];
+  await saveTraineeBatchMap(map);
+  _cachedTraineeBatchMap = map;
+  updateBatchCounts();
+}
+
+function getTraineeBatch(traineeName) {
+  return _cachedTraineeBatchMap[traineeName] || null;
+}
+
+async function updateBatchCounts() {
+  const batches = [..._cachedBatches];
+  const map = _cachedTraineeBatchMap;
+  if (!fbReady()) return;
+  const { db, doc, setDoc } = window._fb;
+  for (const b of batches) {
+    b.traineeCount = Object.values(map).filter(id => id === b.id).length;
+    try { await setDoc(doc(db, 'p3_batches', b.id), b); } catch(e) {}
+  }
+}
+
+function getBatchStats(batchId) {
+  const map = _cachedTraineeBatchMap;
+  const batchTrainees = Object.entries(map).filter(([name, bid]) => bid === batchId).map(([name]) => name);
+  const batchResults = allResults.filter(r => batchTrainees.includes(r.name));
+  if (batchResults.length === 0) {
+    return { total: 0, avgScore: 0, passRate: 0, topScore: 0, lowScore: 0, attempts: 0 };
+  }
+  const scores = batchResults.map(r => r.score);
+  const passed = batchResults.filter(r => r.passed).length;
+  return {
+    total: batchTrainees.length,
+    avgScore: Math.round(scores.reduce((a,b) => a+b, 0) / scores.length),
+    passRate: Math.round((passed / scores.length) * 100),
+    topScore: Math.max(...scores),
+    lowScore: Math.min(...scores),
+    attempts: scores.length
+  };
+}
+
+// Initialize demo batches if none exist (runs after Firebase is ready)
+async function initDemoBatches() {
+  // Wait for Firestore listener to populate _cachedBatches
+  await new Promise(r => setTimeout(r, 1200));
+  if (_cachedBatches.length === 0) {
+    await createBatch('Batch A — May 2026', 'Initial onboarding cohort for May 2026', '2026-05-01', '2026-05-31');
+    await createBatch('Batch B — June 2026', 'Second onboarding cohort for June 2026', '2026-06-01', '2026-06-30');
+    await createBatch('Batch C — July 2026', 'Advanced training cohort for July 2026', '2026-07-01', '2026-07-31');
+  }
+}
+
+// ==================== QUIZ DATA ====================
+
+const questionBanks = {
+
+CCM: [
+  {q:"What does CCM stand for?", options:["Chronic Care Management","Critical Care Monitoring","Complete Care Management","Coordinated Clinical Medicine"], answer:0},
+  {q:"How many chronic conditions are required for CCM eligibility?", options:["1","2 or more","3 or more","5 or more"], answer:1},
+  {q:"CCM services are primarily:", options:["Face-to-face only","Non-face-to-face care coordination","Emergency services","Hospital admissions"], answer:1},
+  {q:"Which patients typically qualify for CCM?", options:["Patients with acute injuries","Patients with chronic conditions","Patients without insurance","Children only"], answer:1},
+  {q:"A major benefit of CCM is:", options:["Longer hospital stays","Improved patient engagement","Reduced provider communication","No documentation"], answer:1},
+  {q:"Which federal program reimburses CCM services?", options:["Medicaid only","Medicare","Private insurance only","CHIP"], answer:1},
+  {q:"The minimum time required per month for standard CCM billing (CPT 99490) is:", options:["10 minutes","20 minutes","30 minutes","60 minutes"], answer:1},
+  {q:"CCM requires a comprehensive care plan that is:", options:["Optional for providers","Electronic and sharable","Only available on paper","Kept secret from patients"], answer:1},
+  {q:"Patient consent for CCM must be:", options:["Verbal only","Obtained and documented","Skipped for repeat patients","Given by family members only"], answer:1},
+  {q:"Which of the following is a core element of a CCM care plan?", options:["Patient's travel itinerary","Expected outcome goals","Office decor preferences","Marketing strategy"], answer:1},
+  {q:"CCM care coordination typically includes:", options:["Scheduling surgeries only","Communication with specialists and other providers","Payroll management","Staff recruitment"], answer:1},
+  {q:"Complex CCM (CPT 99487) requires at least how many minutes of clinical staff time per month?", options:["20 minutes","60 minutes","45 minutes","10 minutes"], answer:1},
+  {q:"Which of the following conditions commonly qualifies a patient for CCM?", options:["Sprained wrist","Diabetes and hypertension","Seasonal allergies","Minor bruise"], answer:1},
+  {q:"CCM services help reduce:", options:["Patient engagement","Hospital readmissions","Provider revenue","Medical documentation"], answer:1},
+  {q:"Who can bill for CCM services under Medicare?", options:["Any office staff","Qualified healthcare providers such as physicians and NPs","Patients themselves","Insurance agents"], answer:1},
+  {q:"CCM clinical staff performing services must be under:", options:["No supervision","General supervision of the billing provider","Direct patient supervision only","State board supervision"], answer:1},
+  {q:"CCM care plans must be reviewed:", options:["Never","At least annually or when conditions change","Only on patient request","Every 5 years"], answer:1},
+  {q:"A key difference between CCM and PCM is:", options:["CCM requires only one chronic condition","CCM covers two or more chronic conditions while PCM focuses on one","PCM has no billing codes","CCM is only for hospital patients"], answer:1},
+  {q:"Which tool is typically used to document CCM time and activities?", options:["A stopwatch","An EHR-based time-tracking or care management platform","A paper notebook only","A billing spreadsheet only"], answer:1},
+  {q:"CCM helps improve which patient metric?", options:["Patient travel frequency","Medication adherence","Office furniture usage","Building maintenance"], answer:1},
+  {q:"The CCM care plan must address which of the following?", options:["Social media activity","Health goals, medications, and care team contacts","Restaurant preferences","Vehicle maintenance"], answer:1},
+  {q:"Can a patient receive both CCM and PCM in the same month?", options:["Yes, always","No, they are generally not billed together for the same period","Only with insurance approval","Only for hospital patients"], answer:1},
+  {q:"What is a key responsibility of a CCM care coordinator?", options:["Handling payroll","Following up with patients and coordinating care between providers","Designing office layouts","Managing social media"], answer:1},
+  {q:"CCM contributes to value-based care by:", options:["Increasing unnecessary procedures","Proactively managing chronic conditions to improve outcomes","Limiting patient communication","Reducing care documentation"], answer:1},
+  {q:"A patient must be enrolled in which Medicare plan to receive CCM benefits?", options:["Medicare Part A only","Medicare Part B","Medicare Part D only","Medicaid only"], answer:1},
+  {q:"How often can CCM services be billed?", options:["Once per year","Once per calendar month","Once per week","Once per quarter"], answer:1},
+  {q:"Which of the following best describes the CCM care team?", options:["A single physician with no support staff","A multidisciplinary team including the provider, clinical staff, and specialists","An insurance company panel","A hospital emergency team"], answer:1},
+  {q:"What must happen before CCM services begin?", options:["Patient must be admitted to the hospital","Patient must provide written or verbal consent","Patient must pay upfront","Patient must sign a financial guarantee"], answer:1},
+  {q:"CCM supports which broader healthcare goal?", options:["Reducing patient-provider communication","Triple Aim: better care, better health, and lower costs","Eliminating specialist referrals","Increasing emergency room visits"], answer:1},
+  {q:"The overall goal of CCM is to:", options:["Replace all in-person visits","Provide proactive, coordinated care for patients with chronic conditions","Eliminate care plans","Reduce provider documentation requirements"], answer:1}
+],
+
+
+PCM: [
+  {q:"What does PCM stand for?", options:["Primary Care Monitoring","Principal Care Management","Patient Care Management","Provider Care Management"], answer:1},
+  {q:"PCM is primarily designed for patients with:", options:["One serious chronic condition","Acute injuries","Seasonal allergies","No medical conditions"], answer:0},
+  {q:"What is the goal of PCM?", options:["Managing complex chronic conditions","Replacing emergency care","Providing surgery","Handling insurance claims"], answer:0},
+  {q:"PCM services are usually:", options:["Non-face-to-face care management","Emergency room procedures","Surgical treatments","Dental procedures"], answer:0},
+  {q:"Which provider can offer PCM services?", options:["Qualified healthcare providers","Insurance agents","Restaurant managers","Receptionists"], answer:0},
+  {q:"PCM focuses on:", options:["One complex chronic condition","Multiple acute conditions","Routine wellness only","Short-term illness"], answer:0},
+  {q:"Which patient may qualify for PCM?", options:["Cancer patient","Healthy athlete","Patient with flu","Temporary injury patient"], answer:0},
+  {q:"PCM care coordination improves:", options:["Patient outcomes","Office rent","Hospital construction","Transportation"], answer:0},
+  {q:"What is essential in PCM documentation?", options:["Care plan records","Social media updates","Marketing reports","Payroll data"], answer:0},
+  {q:"PCM services help reduce:", options:["Care gaps","Provider communication","Patient engagement","Medical records"], answer:0},
+  {q:"A PCM care plan should include:", options:["Treatment goals","Vacation schedules","Restaurant menus","Building plans"], answer:0},
+  {q:"PCM supports providers through:", options:["Care coordination","Vehicle maintenance","Advertising campaigns","Recruitment"], answer:0},
+  {q:"Patient engagement in PCM means:", options:["Regular communication with patients","Avoiding follow-up","Ignoring concerns","Providing no updates"], answer:0},
+  {q:"PCM services can improve:", options:["Medication adherence","Traffic management","Payroll processing","Inventory systems"], answer:0},
+  {q:"Which condition commonly qualifies for PCM?", options:["COPD","Sprained ankle","Common cold","Minor headache"], answer:0},
+  {q:"PCM helps manage:", options:["Complex chronic diseases","Building maintenance","Travel expenses","Food delivery"], answer:0},
+  {q:"What is a benefit of PCM for patients?", options:["Better care coordination","Increased hospital visits","No provider contact","Higher confusion"], answer:0},
+  {q:"PCM communication may occur:", options:["By phone or digital communication","Only in surgery rooms","Only by mail","Only in hospitals"], answer:0},
+  {q:"PCM improves collaboration between:", options:["Providers and patients","Restaurants and vendors","Drivers and mechanics","Banks and insurers"], answer:0},
+  {q:"Which of the following is part of PCM?", options:["Ongoing monitoring","One-time treatment","Emergency surgery","Radiology imaging"], answer:0},
+  {q:"PCM services require patient:", options:["Consent","Hospital admission","Surgery approval","Travel insurance"], answer:0},
+  {q:"What is a key provider benefit of PCM?", options:["Reduced administrative burden","Longer billing cycles","More paperwork","Reduced patient interaction"], answer:0},
+  {q:"PCM is beneficial because it supports:", options:["Continuous care management","Temporary treatments","Retail operations","Human resources"], answer:0},
+  {q:"Patients receiving PCM often need:", options:["Specialized disease management","No follow-up","Cosmetic procedures","Fitness coaching only"], answer:0},
+  {q:"Care coordination in PCM includes:", options:["Communication with specialists","Restaurant reservations","Vehicle tracking","Payroll approval"], answer:0},
+  {q:"PCM services may help prevent:", options:["Hospitalizations","Office meetings","Recruitment delays","Marketing expenses"], answer:0},
+  {q:"Which professional often participates in PCM?", options:["Care coordinators","Construction workers","Graphic designers","Drivers"], answer:0},
+  {q:"A successful PCM program requires:", options:["Consistent follow-up","Ignoring patients","No documentation","Limited communication"], answer:0},
+  {q:"PCM services are reimbursable under:", options:["Medicare guidelines","Travel policies","Restaurant insurance","Retail standards"], answer:0},
+  {q:"The overall purpose of PCM is to:", options:["Improve chronic condition management","Eliminate providers","Replace hospitals","Reduce communication"], answer:0}
+],
+
+RPM: [
+  {q:"What does RPM stand for?", options:["Remote Patient Monitoring","Rapid Provider Management","Routine Patient Medicine","Remote Provider Monitoring"], answer:0},
+  {q:"RPM commonly uses:", options:["Remote monitoring devices","Paper charts only","Surgery equipment","Pharmacy systems"], answer:0},
+  {q:"RPM helps providers track:", options:["Patient vitals remotely","Travel expenses","Office attendance","Parking spaces"], answer:0},
+  {q:"A common RPM device is:", options:["Blood pressure monitor","Printer","Television","Scanner"], answer:0},
+  {q:"RPM improves:", options:["Patient engagement and early intervention","Building security","Restaurant management","Marketing automation"], answer:0},
+  {q:"Which of the following is a common RPM device?", options:["Blood glucose meter","Stethoscope","X-ray machine","MRI scanner"], answer:0},
+  {q:"RPM data must be transmitted:", options:["Electronically and automatically","By fax only","Through postal mail","Via phone call"], answer:0},
+  {q:"RPM programs mainly help providers by:",options:["Monitoring patient health remotely","Managing payroll systems","Scheduling vacations","Reducing communication"], answer:0},
+  {q:"RPM allows healthcare providers to:",options:["Track patient vitals outside the clinic","Replace all hospital visits","Eliminate patient communication","Manage restaurant operations"], answer:0},
+  {q:"One key advantage of RPM for patients is:",options:["Early identification of health concerns","Higher travel expenses","Less communication with providers","No follow-up care"], answer:0},
+  {q:"RPM services can be billed for patients with:", options:["Both chronic and acute conditions","Only chronic conditions","Only acute conditions","Only healthy patients"], answer:0},
+  {q:"A patient must have what type of relationship with the provider to receive RPM services?", options:["Established patient relationship","New patient only","No relationship required","Family member only"], answer:0},
+  {q:"Which of the following vitals can RPM devices monitor?", options:["Blood pressure, glucose, and weight","Eye pressure only","Bone density only","Dental health only"], answer:0},
+  {q:"RPM devices must meet the definition of a medical device as defined by:", options:["The FDA","The FCC","The EPA","The FTC"], answer:0},
+  {q:"For Medicare reimbursement, RPM data must be collected by:", options:["An electronically connected device","Manual patient self-reporting","Phone calls to the office","Paper logbooks"], answer:0},
+  {q:"Which of the following is NOT a common RPM device?", options:["MRI machine","Blood pressure cuff","Pulse oximeter","Weight scale"], answer:0},
+  {q:"RPM treatment management time can be provided by:", options:["Clinical staff under general supervision","Only the physician personally","Only the patient","Insurance agents"], answer:0},
+  {q:"What is the Medicare beneficiary copay for RPM services?", options:["20% of the approved cost","0% — fully covered","50% of the approved cost","100% — not covered"], answer:0},
+  {q:"Which condition is commonly monitored through RPM?", options:["Hypertension","Broken arm","Common cold","Minor headache"], answer:0},
+  {q:"RPM helps reduce which of the following?", options:["Hospital readmissions","Patient satisfaction","Provider revenue","Care coordination"], answer:0},
+  {q:"What is required before billing RPM services?", options:["Patient consent","Hospital admission","Surgery approval","Travel insurance"], answer:0},
+  {q:"RPM data transmission most commonly occurs via:", options:["Cellular networking or Bluetooth","Carrier pigeon","Postal service","Telegraph"], answer:0},
+  {q:"Which of the following is a benefit of RPM for patients?", options:["Continuous monitoring between visits","More frequent office visits","No provider contact","Higher medical costs"], answer:0},
+  {q:"RPM programs are most effective when patients:",options:["Consistently use and engage with devices","Ignore care instructions","Avoid provider communication","Skip monitoring sessions"], answer:0},
+  {q:"RPM supports healthcare teams by providing:",options:["Real-time patient health insights","Construction project updates","Retail inventory reports","Transportation tracking"], answer:0},
+  {q:"RPM communication between patients and providers helps:",options:["Improve care coordination and outcomes","Reduce patient engagement","Eliminate follow-ups","Replace medical records"], answer:0},
+  {q:"A spirometer is used in RPM to monitor:", options:["Respiratory flow rate","Blood sugar levels","Body temperature","Heart rhythm"], answer:0},
+  {q:"RPM platforms must comply with which regulation for data security?", options:["HIPAA","OSHA","FCC Part 15","ADA"], answer:0},
+  {q:"Which of the following best describes the RPM process?", options:["Device captures data, transmits electronically, provider reviews and intervenes","Patient calls daily with readings","Provider visits patient daily","Data is stored only on the device"], answer:0},
+  {q:"The overall purpose of RPM is to:", options:["Improve chronic condition management through continuous monitoring","Replace all in-person visits","Eliminate provider communication","Reduce patient engagement"], answer:0}
+],
+
+Sales: [
+  {q:"What does the 30/70 sales rule mean?", options:["Talk 70% and listen 30%","Listen 70% and talk 30%","Talk and listen equally","Avoid asking questions"], answer:1},
+  {q:"The main purpose of a cold call is to:", options:["Build interest and qualify","Close immediately","Argue with prospects","Send invoices"], answer:0},
+  {q:"SPIN selling stands for:", options:["Situation, Problem, Implication, Need-payoff","Sales, Pitch, Interest, Negotiation","Simple, Practical, Intelligent, Natural","Speak, Present, Influence, Negotiate"], answer:0},
+  {q:"A Situation question in SPIN selling helps to:", options:["Understand the current workflow","Close the sale","Handle objections","End the call quickly"], answer:0},
+  {q:"Problem questions are used to:", options:["Identify pain points","Discuss pricing","Schedule vacations","Explain billing codes"], answer:0},
+  {q:"Implication questions help the prospect:", options:["Understand the impact of the problem","Avoid communication","Reject the service","Skip qualification"], answer:0},
+  {q:"Need-payoff questions focus on:", options:["The value of solving the issue","Contract termination","Provider payroll","Insurance claims"], answer:0},
+  {q:"An SDR should primarily sound:", options:["Professional and conversational","Aggressive and loud","Robotic","Uninterested"], answer:0},
+  {q:"A gatekeeper is:", options:["A person who controls access to decision makers","A billing software","A patient","A care coordinator"], answer:0},
+  {q:"The best way to handle objections is to:", options:["Acknowledge and clarify","Interrupt the prospect","Argue immediately","Ignore concerns"], answer:0},
+  {q:"A discovery call mainly helps to:", options:["Understand practice needs","Close within 1 minute","Avoid questions","Discuss unrelated topics"], answer:0},
+  {q:"What is the purpose of lead qualification?", options:["Identify if the prospect is a good fit","Increase call duration","Avoid follow-ups","Transfer every call"], answer:0},
+  {q:"In healthcare sales, compliance is important because:", options:["Patient data must stay protected","It increases cold calls","It reduces communication","It avoids documentation"], answer:0},
+  {q:"HIPAA mainly protects:", options:["Patient health information","Office furniture","Sales scripts","Marketing data"], answer:0},
+  {q:"CCM stands for:", options:["Chronic Care Management","Care Coordination Method","Critical Care Medicine","Clinical Coding Management"], answer:0},
+  {q:"RPM programs commonly monitor:", options:["Patient vitals remotely","Restaurant inventory","Office attendance","Travel expenses"], answer:0},
+  {q:"PCM is generally focused on:", options:["One serious chronic condition","Temporary injuries","Dental cleaning","Hospital construction"], answer:0},
+  {q:"A good cold call opening should:", options:["Be short and clear","Last 10 minutes","Start with pricing","Avoid introductions"], answer:0},
+  {q:"What is an effective follow-up strategy?", options:["Consistent and value-driven communication","Calling every 5 minutes","Ignoring previous conversations","Only sending invoices"], answer:0},
+  {q:"Which US time zone is California in?", options:["Pacific Time","Central Time","Eastern Time","Mountain Time"], answer:0},
+  {q:"New York follows which time zone?", options:["Eastern Time","Pacific Time","Central Time","Alaska Time"], answer:0},
+  {q:"Texas mainly follows:", options:["Central Time","Pacific Time","Eastern Time","Hawaii Time"], answer:0},
+  {q:"The decision maker in a clinic is often:", options:["Doctor or practice manager","Patient","Receptionist only","Insurance company"], answer:0},
+  {q:"An effective sales rep should ask:", options:["Open-ended questions","Only yes/no questions","No questions","Personal questions only"], answer:0},
+  {q:"Active listening during calls helps:", options:["Build trust and understanding","End calls faster","Avoid objections","Reduce engagement"], answer:0},
+  {q:"The purpose of healthcare care management services is to:", options:["Improve patient outcomes and coordination","Replace doctors","Increase paperwork","Reduce patient communication"], answer:0},
+  {q:"What should you do before pitching a service?", options:["Understand the prospect’s workflow","Discuss pricing immediately","Send contracts","Skip discovery"], answer:0},
+  {q:"A strong value proposition should explain:", options:["How the service helps the practice","Personal opinions","Office timings only","Vacation policies"], answer:0},
+  {q:"During a cold call, confidence should sound:", options:["Calm and professional","Aggressive","Rude","Overexcited"], answer:0},
+  {q:"What is one major goal of consultative selling?", options:["Provide tailored solutions","Pressure the client","Rush the close","Avoid discovery questions"], answer:0}
+],
+
+Comprehensive: [
+  {q:"Which patient population is the primary focus of Chronic Care Management services?", options:["Patients recovering from surgery","Individuals with multiple long-term health conditions","Healthy adults seeking preventive care","Pediatric patients with acute infections"], answer:1},
+  {q:"What is the minimum number of chronic conditions a patient must have to qualify for CCM enrollment?", options:["One condition","Two or more conditions","Three or more conditions","Five or more conditions"], answer:1},
+  {q:"CCM care coordination activities are primarily delivered through which method?", options:["In-person office visits only","Remote communication between appointments","Emergency room consultations","Hospital inpatient rounds"], answer:1},
+  {q:"Which of the following best describes the core purpose of CCM?", options:["Replacing primary care visits","Coordinating ongoing care for complex patients","Performing surgical procedures","Managing hospital admissions"], answer:1},
+  {q:"A significant advantage of implementing CCM for patients is improved:", options:["Hospital length of stay","Patient engagement and self-management","Number of emergency procedures","Frequency of specialist referrals"], answer:1},
+  {q:"For CCM eligibility, chronic conditions must be expected to persist for at least how long?", options:["30 days","3 months","6 months","12 months or more"], answer:3},
+  {q:"Which professional role is essential in delivering CCM services?", options:["Care coordinator or clinical staff","Hospital administrator","Insurance underwriter","Medical equipment salesperson"], answer:0},
+  {q:"What must be established before initiating CCM services for a patient?", options:["A comprehensive care plan","A surgical schedule","A marketing campaign","A billing contract"], answer:0},
+  {q:"CCM services help reduce which of the following outcomes?", options:["Preventable hospitalizations","Patient satisfaction scores","Provider communication frequency","Care plan documentation"], answer:0},
+  {q:"Which type of interaction is a hallmark of CCM service delivery?", options:["Monthly phone or digital check-ins","Annual physical examination only","Same-day urgent care visits","Bi-weekly home nursing visits"], answer:0},
+  {q:"In CCM, the care plan should address all of the following EXCEPT:", options:["Medication management","Patient health goals","Office renovation plans","Coordination with specialists"], answer:2},
+  {q:"Patient consent for CCM services must be:", options:["Documented and obtained before enrollment","Given verbally without records","Provided after three months of service","Waived for Medicare patients"], answer:0},
+  {q:"Which condition commonly qualifies a patient for CCM?", options:["Hypertension and diabetes together","A single sprained ankle","Common cold symptoms","Temporary food poisoning"], answer:0},
+  {q:"CCM emphasizes proactive management rather than:", options:["Reactive crisis intervention","Scheduled appointments","Patient education","Team-based care"], answer:0},
+  {q:"The success of a CCM program is measured primarily by:", options:["Patient health outcomes and engagement","Number of devices sold","Office square footage","Marketing impressions"], answer:0},
+  {q:"Principal Care Management is designed for patients managing how many complex chronic conditions?", options:["One single high-complexity condition","Two concurrent conditions","Three or more conditions","Any acute illness"], answer:0},
+  {q:"What is the minimum expected duration for a condition to qualify under PCM?", options:["30 days","3 months","6 months","12 months"], answer:1},
+  {q:"Which of these patients would most likely qualify for PCM?", options:["A patient with advanced heart failure as their primary concern","Someone with a minor seasonal allergy","A healthy individual seeking wellness coaching","A patient with two well-controlled conditions"], answer:0},
+  {q:"PCM care plans are specifically tailored to address:", options:["One principal chronic condition","All possible health concerns","Cosmetic procedures","Travel vaccinations"], answer:0},
+  {q:"Which healthcare setting can provide PCM services?", options:["Physician offices and qualified clinics","Retail stores","Restaurants","Fitness centers only"], answer:0},
+  {q:"A key distinction between PCM and CCM is the number of:", options:["Qualifying chronic conditions required","Staff members involved","Devices used","Marketing materials needed"], answer:0},
+  {q:"PCM services include which of the following activities?", options:["Medication regimen adjustments and specialist coordination","Building maintenance scheduling","Office supply ordering","Social media management"], answer:0},
+  {q:"For PCM, patient consent must be:", options:["Documented before services begin","Implied after first contact","Given by a family member only","Required only for private insurance"], answer:0},
+  {q:"Which condition is commonly managed through PCM?", options:["Complex diabetes requiring intensive management","A common cold","Minor headache","Seasonal flu"], answer:0},
+  {q:"PCM helps prevent which adverse outcome for patients?", options:["Hospitalizations and functional decline","Weight loss","Increased mobility","Better sleep patterns"], answer:0},
+  {q:"The care coordination in PCM focuses on:", options:["Managing one dominant disease process","Treating multiple unrelated acute issues","Administrative billing only","Facility maintenance"], answer:0},
+  {q:"Which professional can direct PCM clinical staff activities?", options:["Physician or qualified healthcare professional","Office receptionist","Insurance agent","Medical device vendor"], answer:0},
+  {q:"PCM is particularly valuable for specialty practices such as:", options:["Cardiology and endocrinology","Dental offices","Optometry only","Pharmacies"], answer:0},
+  {q:"A patient with poorly controlled Type 1 diabetes and no other major conditions would be a candidate for:", options:["PCM services","CCM only","Neither program","Urgent care only"], answer:0},
+  {q:"PCM documentation requirements include tracking of:", options:["Clinical time spent on care coordination","Office furniture inventory","Employee lunch breaks","Parking lot maintenance"], answer:0},
+  {q:"Remote Patient Monitoring allows providers to track patient health data from where?", options:["Outside the clinical setting","Only in hospital rooms","During surgery only","At billing offices"], answer:0},
+  {q:"Which device is commonly used in RPM programs?", options:["Blood pressure monitor","Coffee maker","Television remote","Office printer"], answer:0},
+  {q:"RPM data must be transmitted to providers in what manner?", options:["Electronically and automatically","Via handwritten letters","Through verbal reports only","By fax machine"], answer:0},
+  {q:"What relationship must exist before a patient can receive RPM services?", options:["An established provider-patient relationship","No prior relationship needed","Only family connections","Employment relationship"], answer:0},
+  {q:"Which vital signs can RPM devices typically monitor?", options:["Blood pressure, glucose, and weight","Eye color only","Hair growth rate","Shoe size"], answer:0},
+  {q:"RPM programs are most effective when patients:", options:["Consistently use their monitoring devices","Ignore device instructions","Use devices only once","Share devices with neighbors"], answer:0},
+  {q:"A spirometer in RPM is used to monitor:", options:["Respiratory flow and lung function","Blood sugar levels","Body temperature","Heart rhythm"], answer:0},
+  {q:"Which regulation governs data security for RPM platforms?", options:["HIPAA","OSHA","FCC Part 15","ADA"], answer:0},
+  {q:"RPM helps reduce which costly healthcare event?", options:["Hospital readmissions","Patient satisfaction","Provider revenue","Care coordination"], answer:0},
+  {q:"For RPM reimbursement, data must be collected for at least how many days in a 30-day period?", options:["16 days","5 days","30 days","1 day"], answer:0},
+  {q:"Which patient population benefits most from RPM?", options:["Those with chronic conditions like hypertension","Healthy athletes","Patients with temporary colds","Individuals without medical needs"], answer:0},
+  {q:"RPM devices must meet standards set by which organization?", options:["The FDA","The FCC","The EPA","The FTC"], answer:0},
+  {q:"Clinical staff providing RPM treatment management work under:", options:["General supervision of a physician","Complete independence","Insurance company direction","Patient family oversight"], answer:0},
+  {q:"What is required from patients before starting RPM services?", options:["Informed consent","Hospital admission","Surgical clearance","Travel documentation"], answer:0},
+  {q:"The primary goal of RPM is to enable:", options:["Continuous health monitoring between visits","Replacement of all in-person care","Elimination of provider communication","Reduction in patient engagement"], answer:0},
+  {q:"According to the 30/70 rule in sales, what percentage of time should a rep spend listening?", options:["30%","50%","70%","90%"], answer:2},
+  {q:"The primary objective of an initial cold call should be to:", options:["Build rapport and qualify interest","Immediately close the sale","Send pricing information","Schedule a vacation"], answer:0},
+  {q:"In SPIN selling, what does the 'P' stand for?", options:["Problem questions","Pricing discussions","Product features","Personal stories"], answer:0},
+  {q:"Situation questions in SPIN selling help a rep understand:", options:["The prospect's current workflow and context","How to close immediately","The competitor's weaknesses","Office building layout"], answer:0},
+  {q:"Implication questions are designed to help prospects recognize:", options:["The consequences of not solving their problem","How to ignore issues","Ways to delay decisions","Reasons to avoid change"], answer:0},
+  {q:"Need-payoff questions focus the conversation on:", options:["The value and benefits of solving the issue","Contract termination clauses","Provider payroll systems","Insurance claim processes"], answer:0},
+  {q:"A gatekeeper in sales refers to:", options:["Someone who controls access to decision-makers","A software billing system","A medical patient","A care coordinator"], answer:0},
+  {q:"When handling objections, the best first step is to:", options:["Acknowledge the concern and ask clarifying questions","Interrupt and argue","Immediately hang up","Ignore the objection"], answer:0},
+  {q:"The main purpose of a discovery call is to:", options:["Understand the prospect's needs and challenges","Close the deal in under 60 seconds","Avoid asking any questions","Discuss unrelated topics"], answer:0},
+  {q:"Lead qualification helps determine:", options:["Whether the prospect is a good fit for the service","How to increase call duration","Ways to avoid follow-ups","How to transfer every call"], answer:0},
+  {q:"In healthcare sales, maintaining compliance is critical because:", options:["Patient information must be protected","It increases cold call volume","It reduces communication","It eliminates documentation"], answer:0},
+  {q:"HIPAA regulations primarily protect:", options:["Patient health information privacy","Office furniture","Sales scripts","Marketing analytics"], answer:0},
+  {q:"An effective cold call opening should be:", options:["Brief, clear, and respectful of time","At least 10 minutes long","Focused on pricing first","Without any introduction"], answer:0},
+  {q:"Which time zone does the state of California primarily follow?", options:["Pacific Time","Central Time","Eastern Time","Mountain Time"], answer:0},
+  {q:"The decision-maker in a medical practice is typically:", options:["The physician or practice manager","The patient","Only the receptionist","An insurance company representative"], answer:0}
+]
+};
+
+// Comprehensive quiz pulls from all modules (assembled after all banks are defined)
+// This is set after questionBanks object is complete — see bottom of script
+
+// ==================== STATE ====================
+let quizQuestions = [];
+let currentQ = 0;
+let answers = [];
+let flagged = [];
+let quizTimer;
+let timeLeft = 20 * 60;
+let quizStartTime;
+let traineeName = '';
+let traineeDept = '';
+
+// Build Comprehensive bank from all modules (30 random from each = up to 120, take 60)
+const comprehensiveBank = [];
+['CCM','PCM','RPM','Sales'].forEach(k => {
+  const shuffled = [...questionBanks[k]].sort(() => Math.random() - 0.5);
+  comprehensiveBank.push(...shuffled.slice(0, 15));
+});
+questionBanks.Comprehensive = comprehensiveBank.sort(() => Math.random() - 0.5);
+
+// ==================== LIVE SESSION STORAGE (Firebase) ====================
+async function saveLiveSession(sessionId, sessionData) {
+  if (!fbReady()) return;
+  const { db, doc, setDoc } = window._fb;
+  try {
+    await setDoc(doc(db, 'p3_live_sessions', sessionId), { ...sessionData, lastUpdated: Date.now() });
+  } catch(e) { console.warn('saveLiveSession error:', e); }
+}
+
+async function deleteLiveSession(sessionId) {
+  if (!fbReady()) return;
+  const { db, doc, deleteDoc } = window._fb;
+  try {
+    await deleteDoc(doc(db, 'p3_live_sessions', sessionId));
+  } catch(e) { console.warn('deleteLiveSession error:', e); }
+}
+
+function getActiveLiveSessions() {
+  // Return from in-memory cache (kept fresh by Firestore onSnapshot listener)
+  const now = Date.now();
+  return Object.values(liveSessions).filter(s => {
+    const stale = s.lastUpdated && (now - s.lastUpdated) > 90000;
+    return s.active && !stale;
+  });
+}
+
+// Simulated results storage (populated by Firestore real-time listener)
+let allResults = [];
+let liveSessions = {};
+
+// Simulated module data for demo
+let moduleData = {
+  CCM: { attempts: 0, scores: [], passed: 0 },
+  PCM: { attempts: 0, scores: [], passed: 0 },
+  RPM: { attempts: 0, scores: [], passed: 0 },
+  Sales: { attempts: 0, scores: [], passed: 0 },
+  Comprehensive: { attempts: 0, scores: [], passed: 0 }
+};
+// (moduleData is now populated by the Firebase results listener)
+
+// ==================== ADMIN CREDENTIALS ====================
+// Change these values to set your admin username & password
+const ADMIN_CREDENTIALS = {
+  username: 'p3admin',
+  password: 'P3Health@2024'
+};
+
+// Module PINs — change these to set access codes for each quiz
+const MODULE_PINS = {
+  'CCM Fundamentals': 'K9#mP2vL',
+  'PCM Fundamentals': 'X7@qR4wZ',
+  'RPM Fundamentals': 'B3!nT8yH',
+  'General Sales Fundamentals': 'F5$cV1jK',
+  'Comprehensive Quiz': 'D6&pL9xQ'
+};
+
+let adminAuthenticated = false;
+
+// ==================== MODE SWITCH ====================
+function switchMode(mode) {
+  if(mode === 'home') {
+    // Full reset — back to login screen
+    document.getElementById('traineeApp').style.display = 'block';
+    document.getElementById('adminApp').style.display = 'none';
+    document.getElementById('modeSwitch').value = 'home';
+
+    // Reset trainee state
+    traineeName = '';
+    traineeDept = '';
+    clearInterval(quizTimer);
+    if(window.currentSessionId) {
+      deleteLiveSession(window.currentSessionId);
+      delete liveSessions[window.currentSessionId];
+      window.currentSessionId = null;
+    }
+
+    // Show only login screen
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('dashboardScreen').classList.add('hidden');
+    document.getElementById('welcomeScreen').classList.add('hidden');
+    document.getElementById('quizInterface').classList.add('hidden');
+    document.getElementById('resultScreen').classList.add('hidden');
+    // Clear name/dept inputs for fresh entry
+    document.getElementById('traineeName').value = '';
+    document.getElementById('traineeDept').value = '';
+
+    adminAuthenticated = false;
+    return;
+  }
+  if(mode === 'admin') {
+    if(adminAuthenticated) {
+      showAdminDashboard();
+    } else {
+      document.getElementById('adminLoginOverlay').classList.add('active');
+      document.getElementById('adminUsername').value = '';
+      document.getElementById('adminPassword').value = '';
+      document.getElementById('adminLoginError').style.display = 'none';
+      setTimeout(() => document.getElementById('adminUsername').focus(), 100);
+      document.getElementById('modeSwitch').value = 'home';
+    }
+  } else {
+    // trainee mode — keep admin auth so switching back doesn't require re-login
+    document.getElementById('traineeApp').style.display = 'block';
+    document.getElementById('adminApp').style.display = 'none';
+    document.getElementById('modeSwitch').value = 'trainee';
+    // Restore trainee to their last screen (login if no name, dashboard if name set)
+    if(!traineeName) {
+      document.getElementById('loginScreen').classList.remove('hidden');
+      document.getElementById('dashboardScreen').classList.add('hidden');
+    } else {
+      document.getElementById('loginScreen').classList.add('hidden');
+      document.getElementById('dashboardScreen').classList.remove('hidden');
+    }
+    document.getElementById('welcomeScreen').classList.add('hidden');
+    document.getElementById('quizInterface').classList.add('hidden');
+    document.getElementById('resultScreen').classList.add('hidden');
+  }
+}
+
+function verifyAdminLogin() {
+  const user = document.getElementById('adminUsername').value.trim();
+  const pass = document.getElementById('adminPassword').value;
+  const errEl = document.getElementById('adminLoginError');
+
+  if(user === ADMIN_CREDENTIALS.username && pass === ADMIN_CREDENTIALS.password) {
+    adminAuthenticated = true;
+    document.getElementById('adminLoginOverlay').classList.remove('active');
+    showAdminDashboard();
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('adminPassword').value = '';
+    document.getElementById('adminPassword').focus();
+    // Brief shake animation
+    const modal = document.querySelector('.admin-login-modal');
+    modal.style.animation = 'none';
+    setTimeout(() => { modal.style.animation = ''; }, 10);
+  }
+}
+
+function cancelAdminLogin() {
+  document.getElementById('adminLoginOverlay').classList.remove('active');
+  document.getElementById('modeSwitch').value = 'trainee';
+}
+
+// ==================== REFRESH FROM STORAGE ====================
+function refreshResultsFromStorage() {
+  // Data is kept up-to-date by the Firebase onSnapshot listener — no manual refresh needed.
+  // Recompute moduleData from current allResults just in case
+  moduleData = {
+    CCM: { attempts: 0, scores: [], passed: 0 },
+    PCM: { attempts: 0, scores: [], passed: 0 },
+    RPM: { attempts: 0, scores: [], passed: 0 },
+    Sales: { attempts: 0, scores: [], passed: 0 },
+    Comprehensive: { attempts: 0, scores: [], passed: 0 }
+  };
+  allResults.forEach(r => {
+    const mod = r.module || 'CCM';
+    if (moduleData[mod]) {
+      moduleData[mod].attempts++;
+      moduleData[mod].scores.push(r.score);
+      if (r.passed) moduleData[mod].passed++;
+    }
+  });
+}
+
+function showAdminDashboard() {
+  document.getElementById('traineeApp').style.display = 'none';
+  document.getElementById('adminApp').style.display = 'block';
+  document.getElementById('modeSwitch').value = 'admin';
+  currentAdminTab = 'overview';
+  refreshResultsFromStorage();
+  updateAdminDashboard();
+  updateLiveTable();
+}
+
+// ==================== TRAINEE FLOW ====================
+
+let selectedModule = 'CCM Fundamentals';
+
+let pendingModule = null;
+
+function showPinModal(moduleName) {
+  pendingModule = moduleName;
+  document.getElementById('pinModalTitle').textContent = moduleName + ' — Access Required';
+  document.getElementById('pinModalOverlay').classList.add('active');
+  document.getElementById('modulePinInput').value = '';
+  document.getElementById('pinError').style.display = 'none';
+  setTimeout(() => document.getElementById('modulePinInput').focus(), 100);
+}
+
+function verifyModulePin() {
+  const entered = document.getElementById('modulePinInput').value.trim();
+  const expected = MODULE_PINS[pendingModule];
+  const errEl = document.getElementById('pinError');
+
+  if(entered === expected) {
+    document.getElementById('pinModalOverlay').classList.remove('active');
+    const mod = pendingModule;
+    pendingModule = null;
+    openModuleUnlocked(mod);
+  } else {
+    errEl.style.display = 'block';
+    document.getElementById('modulePinInput').value = '';
+    document.getElementById('modulePinInput').focus();
+    const modal = document.querySelector('#pinModalOverlay .admin-login-modal');
+    modal.style.animation = 'none';
+    setTimeout(() => { modal.style.animation = ''; }, 10);
+  }
+}
+
+function cancelPinModal() {
+  document.getElementById('pinModalOverlay').classList.remove('active');
+  pendingModule = null;
+}
+
+function openModule(moduleName) {
+  // Show PIN modal first
+  showPinModal(moduleName);
+}
+
+function openModuleUnlocked(moduleName) {
+  selectedModule = moduleName;
+
+  document.getElementById('dashboardScreen').classList.add('hidden');
+  document.getElementById('welcomeScreen').classList.remove('hidden');
+
+  document.querySelector('#welcomeScreen h1').textContent = moduleName;
+
+  const subtitle = document.querySelector('#welcomeScreen .subtitle');
+  const infoQuestionCount = document.getElementById('infoQuestionCount');
+  const infoTimeLimit = document.getElementById('infoTimeLimit');
+  const metaQuestions = document.getElementById('metaQuestions');
+  const metaTime = document.getElementById('metaTime');
+
+  if(moduleName === 'CCM Fundamentals') {
+    subtitle.textContent = 'Test your knowledge of Chronic Care Management';
+    infoQuestionCount.textContent = '30 multiple choice questions';
+    infoTimeLimit.textContent = '20 minutes time limit';
+    metaQuestions.textContent = '30';
+    metaTime.textContent = '20m';
+  }
+  else if(moduleName === 'PCM Fundamentals') {
+    subtitle.textContent = 'Test your knowledge of Principal Care Management';
+    infoQuestionCount.textContent = '30 multiple choice questions';
+    infoTimeLimit.textContent = '20 minutes time limit';
+    metaQuestions.textContent = '30';
+    metaTime.textContent = '20m';
+  }
+  else if(moduleName === 'RPM Fundamentals') {
+    subtitle.textContent = 'Test your knowledge of Remote Patient Monitoring';
+    infoQuestionCount.textContent = '30 multiple choice questions';
+    infoTimeLimit.textContent = '20 minutes time limit';
+    metaQuestions.textContent = '30';
+    metaTime.textContent = '20m';
+  }
+  else if(moduleName === 'General Sales Fundamentals') {
+    subtitle.textContent = 'Test your healthcare sales and communication skills';
+    infoQuestionCount.textContent = '30 multiple choice questions';
+    infoTimeLimit.textContent = '20 minutes time limit';
+    metaQuestions.textContent = '30';
+    metaTime.textContent = '20m';
+  }
+  else {
+    subtitle.textContent = 'Comprehensive assessment covering all training modules';
+    infoQuestionCount.textContent = '60 multiple choice questions';
+    infoTimeLimit.textContent = '40 minutes time limit';
+    metaQuestions.textContent = '60';
+    metaTime.textContent = '40m';
+  }
+}
+
+
+function startTrainee() {
+  traineeName = document.getElementById('traineeName').value.trim();
+  traineeDept = document.getElementById('traineeDept').value.trim();
+  if(!traineeName) { alert('Please enter your name'); return; }
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('dashboardScreen').classList.remove('hidden');
+}
+
+function launchQuiz() {
+  window.questionShuffleMap = {}; // Reset shuffle order for new quiz
+  const moduleKey = selectedModule.includes('PCM') ? 'PCM' :
+                    selectedModule.includes('RPM') ? 'RPM' :
+                    selectedModule.includes('Sales') ? 'Sales' :
+                    selectedModule.includes('Comprehensive') ? 'Comprehensive' : 'CCM';
+
+  quizQuestions = [...questionBanks[moduleKey]].sort(() => Math.random() - 0.5);
+  currentQ = 0;
+  answers = new Array(quizQuestions.length).fill(null);
+  flagged = new Array(quizQuestions.length).fill(false);
+
+  // Comprehensive quiz gets 40 minutes, others get 20 minutes
+  timeLeft = selectedModule.includes('Comprehensive') ? 40 * 60 : 20 * 60;
+
+  document.getElementById('welcomeScreen').classList.add('hidden');
+  document.getElementById('quizInterface').classList.remove('hidden');
+  document.getElementById('traineeDisplayName').textContent = traineeName;
+  document.getElementById('quizModuleTitle').textContent = selectedModule;
+
+  quizStartTime = Date.now();
+  renderDots();
+  renderQuestion();
+
+  const sessionId = Date.now() + '_' + Math.random().toString(36).substr(2,9);
+  const sessionData = {
+    name: traineeName,
+    dept: traineeDept,
+    module: selectedModule,
+    totalQuestions: quizQuestions.length,
+    currentQ: 0,
+    answered: 0,
+    correct: 0,
+    wrong: 0,
+    timeSpent: 0,
+    startTime: quizStartTime,
+    active: true
+  };
+  liveSessions[sessionId] = sessionData;
+  window.currentSessionId = sessionId;
+  // Persist to localStorage so admin tab can read it
+  saveLiveSession(sessionId, sessionData);
+
+  quizTimer = setInterval(() => {
+    timeLeft--;
+    const m = Math.floor(timeLeft/60).toString().padStart(2,'0');
+    const s = (timeLeft%60).toString().padStart(2,'0');
+    const el = document.getElementById('quizTimer');
+    el.textContent = `⏱ ${m}:${s}`;
+    if(timeLeft < 120) el.classList.add('warning');
+
+    if(window.currentSessionId && liveSessions[window.currentSessionId]) {
+      liveSessions[window.currentSessionId].currentQ = currentQ;
+      liveSessions[window.currentSessionId].answered = answers.filter(a=>a!==null).length;
+      liveSessions[window.currentSessionId].timeSpent = Math.floor((Date.now()-quizStartTime)/1000);
+      saveLiveSession(window.currentSessionId, liveSessions[window.currentSessionId]);
+    }
+
+    if(timeLeft <= 0) { clearInterval(quizTimer); submitQuiz(); }
+  }, 1000);
+}
+
+function renderDots() {
+  let html = '';
+  for(let i=0; i<quizQuestions.length; i++) {
+    let cls = 'dot';
+    if(i === currentQ) cls += ' active';
+    else if(answers[i] !== null) cls += ' answered';
+    if(flagged[i]) cls += ' flagged';
+    html += `<div class="${cls}" onclick="jumpTo(${i})"></div>`;
+  }
+  document.getElementById('progressDots').innerHTML = html;
+}
+
+function renderQuestion() {
+  const q = quizQuestions[currentQ];
+  const box = document.getElementById('questionBox');
+  let html = `<div class="q-num">Question ${currentQ+1} of ${quizQuestions.length}</div>`;
+  html += `<div class="q-text">${q.q}</div>`;
+  html += `<div class="options">`;
+
+  // Store shuffle order per question so it doesn't change on re-render
+  if (!window.questionShuffleMap) window.questionShuffleMap = {};
+  if (!window.questionShuffleMap[currentQ]) {
+    window.questionShuffleMap[currentQ] = [0,1,2,3].sort(() => Math.random() - 0.5);
+  }
+  const optIndices = window.questionShuffleMap[currentQ];
+
+  optIndices.forEach((origIdx, displayIdx) => {
+    let cls = 'option';
+    if(answers[currentQ] === origIdx) cls += ' selected';
+    if(answers[currentQ] !== null) {
+      if(origIdx === q.answer) cls = 'option correct';
+      else if(answers[currentQ] === origIdx) cls = 'option wrong';
+    }
+    html += `<label class="${cls}" onclick="selectAnswer(${origIdx})">`;
+    html += `<input type="radio" name="q${currentQ}" ${answers[currentQ]===origIdx?'checked':''} ${answers[currentQ]!==null?'disabled':''}>`;
+    html += `<span>${String.fromCharCode(65+displayIdx)}. ${q.options[origIdx]}</span>`;
+    html += `</label>`;
+  });
+  html += `</div>`;
+
+  if(answers[currentQ] !== null) {
+    const isCorrect = answers[currentQ] === q.answer;
+    html += `<div style="margin-top:14px;padding:12px 16px;border-radius:8px;font-size:0.9rem;font-weight:500;${isCorrect?'background:var(--green-light);color:var(--green);':'background:var(--red-light);color:var(--red);'}">`;
+    html += isCorrect ? '✅ Correct!' : `❌ Wrong! Correct answer: ${q.options[q.answer]}`;
+    html += `</div>`;
+  }
+
+  box.innerHTML = html;
+
+  document.getElementById('prevBtn').disabled = currentQ === 0;
+  const nextBtn = document.getElementById('nextBtn');
+  nextBtn.textContent = currentQ === quizQuestions.length-1 ? 'Submit Quiz' : 'Next →';
+
+  const flagBtn = document.getElementById('flagBtn');
+  flagBtn.textContent = flagged[currentQ] ? '🚩 Flagged' : '🚩 Flag';
+  flagBtn.style.background = flagged[currentQ] ? 'var(--p3-gold)' : 'var(--p3-gold-light)';
+  flagBtn.style.color = flagged[currentQ] ? 'white' : 'var(--p3-gold)';
+}
+
+function selectAnswer(idx) {
+  if(answers[currentQ] !== null) return;
+  answers[currentQ] = idx;
+
+  if(window.currentSessionId && liveSessions[window.currentSessionId]) {
+    let correctSoFar = 0;
+    answers.forEach((a, i) => { if(a !== null && a === quizQuestions[i].answer) correctSoFar++; });
+    const answeredSoFar = answers.filter(a => a !== null).length;
+    liveSessions[window.currentSessionId].correct = correctSoFar;
+    liveSessions[window.currentSessionId].wrong = answeredSoFar - correctSoFar;
+    liveSessions[window.currentSessionId].answered = answeredSoFar;
+    saveLiveSession(window.currentSessionId, liveSessions[window.currentSessionId]);
+  }
+
+  renderDots();
+  renderQuestion();
+
+  if(currentQ < quizQuestions.length-1 && answers[currentQ] === quizQuestions[currentQ].answer) {
+    setTimeout(() => { if(answers[currentQ] === idx) nextQuestion(); }, 1500);
+  }
+}
+
+function nextQuestion() {
+  if(currentQ < quizQuestions.length-1) {
+    currentQ++;
+    renderDots();
+    renderQuestion();
+  } else {
+    submitQuiz();
+  }
+}
+
+function prevQuestion() {
+  if(currentQ > 0) {
+    currentQ--;
+    renderDots();
+    renderQuestion();
+  }
+}
+
+function jumpTo(idx) {
+  currentQ = idx;
+  renderDots();
+  renderQuestion();
+}
+
+function toggleFlag() {
+  flagged[currentQ] = !flagged[currentQ];
+  renderDots();
+  const flagBtn = document.getElementById('flagBtn');
+  flagBtn.textContent = flagged[currentQ] ? '🚩 Flagged' : '🚩 Flag';
+  flagBtn.style.background = flagged[currentQ] ? 'var(--p3-gold)' : 'var(--p3-gold-light)';
+  flagBtn.style.color = flagged[currentQ] ? 'white' : 'var(--p3-gold)';
+}
+
+function submitQuiz() {
+  clearInterval(quizTimer);
+
+  if(window.currentSessionId && liveSessions[window.currentSessionId]) {
+    liveSessions[window.currentSessionId].active = false;
+    deleteLiveSession(window.currentSessionId);
+    delete liveSessions[window.currentSessionId];
+    window.currentSessionId = null;
+  }
+
+  let correct = 0;
+  answers.forEach((a, i) => { if(a === quizQuestions[i].answer) correct++; });
+  const total = quizQuestions.length;
+  const percent = Math.round((correct/total)*100);
+  const timeTaken = Math.floor((Date.now() - quizStartTime)/1000);
+  const m = Math.floor(timeTaken/60).toString().padStart(2,'0');
+  const s = (timeTaken%60).toString().padStart(2,'0');
+
+  const result = {
+    id: Date.now(),
+    name: traineeName,
+    dept: traineeDept,
+    score: percent,
+    correct: correct,
+    wrong: total - correct,
+    time: `${m}:${s}`,
+    date: new Date().toLocaleDateString(),
+    passed: percent >= 70,
+    module: selectedModule.includes('PCM') ? 'PCM' : selectedModule.includes('RPM') ? 'RPM' : selectedModule.includes('Sales') ? 'Sales' : selectedModule.includes('Comprehensive') ? 'Comprehensive' : 'CCM',
+    quizName: selectedModule
+  };
+  allResults.push(result);
+  // Save to Firestore (real-time sync to admin dashboard)
+  if (fbReady()) {
+    const { db, doc, setDoc } = window._fb;
+    setDoc(doc(db, 'p3_results', String(result.id)), result)
+      .catch(e => { showFbBanner('⚠️ Result saved locally only — check Firebase config', 'warn'); });
+  }
+
+  // Update module data
+  const resultMod = result.module;
+  if(moduleData[resultMod]) {
+    moduleData[resultMod].attempts++;
+    moduleData[resultMod].scores.push(percent);
+    if(percent >= 70) moduleData[resultMod].passed++;
+  }
+
+  document.getElementById('quizInterface').classList.add('hidden');
+  document.getElementById('resultScreen').classList.remove('hidden');
+  document.getElementById('resultPercent').textContent = percent + '%';
+  document.getElementById('resultCorrect').textContent = correct;
+  document.getElementById('resultWrong').textContent = total - correct;
+  document.getElementById('resultTime').textContent = `${m}:${s}`;
+
+  const statusEl = document.getElementById('resultStatus');
+  if(percent >= 70) {
+    statusEl.textContent = '🎉 Congratulations! You Passed';
+    statusEl.className = 'result-status pass';
+  } else {
+    statusEl.textContent = '❌ You Did Not Pass. Try Again!';
+    statusEl.className = 'result-status fail';
+  }
+}
+
+
+function goBackToDashboard() {
+  document.getElementById('resultScreen').classList.add('hidden');
+  document.getElementById('dashboardScreen').classList.remove('hidden');
+}
+
+function retakeCurrentModule() {
+  document.getElementById('resultScreen').classList.add('hidden');
+  // Go back to welcome screen for the same module (re-show instructions)
+  document.getElementById('welcomeScreen').classList.remove('hidden');
+}
+
+
+let currentBatchId = null;
+
+function createNewBatch() {
+  const name = document.getElementById('newBatchName').value.trim();
+  const start = document.getElementById('newBatchStart').value;
+  const end = document.getElementById('newBatchEnd').value;
+  const desc = document.getElementById('newBatchDesc').value.trim();
+  const errEl = document.getElementById('batchCreateError');
+
+  if (!name) {
+    errEl.textContent = 'Please enter a batch name.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  createBatch(name, desc, start, end);
+
+  // Clear form
+  document.getElementById('newBatchName').value = '';
+  document.getElementById('newBatchStart').value = '';
+  document.getElementById('newBatchEnd').value = '';
+  document.getElementById('newBatchDesc').value = '';
+  errEl.style.display = 'none';
+
+  renderBatchCards();
+  renderBatchComparison();
+}
+
+function renderBatchCards() {
+  const batches = getBatches();
+  const grid = document.getElementById('batchCardsGrid');
+
+  if (batches.length === 0) {
+    grid.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:30px;">No batches created yet. Create your first batch above.</div>';
+    return;
+  }
+
+  grid.innerHTML = batches.map(batch => {
+    const stats = getBatchStats(batch.id);
+    const statusColor = stats.passRate >= 70 ? 'var(--green)' : stats.passRate >= 50 ? 'var(--p3-gold)' : 'var(--red)';
+    const statusText = stats.passRate >= 70 ? 'Strong' : stats.passRate >= 50 ? 'Average' : 'Needs Attention';
+
+    return `
+    <div class="module-card" style="cursor:pointer;transition:all 0.2s;" onclick="openBatchDetail('${batch.id}')" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='0 12px 30px rgba(107,31,122,0.1)';" onmouseout="this.style.transform='';this.style.boxShadow='';">
+      <div class="module-card-header">
+        <h4 style="font-size:1rem;">${batch.name}</h4>
+        <div class="module-score" style="font-size:1.1rem;color:${statusColor};">${stats.avgScore > 0 ? stats.avgScore + '%' : '--'}</div>
+      </div>
+      <div style="font-size:0.8rem;color:var(--gray-400);margin-bottom:12px;">${batch.description || 'No description'}</div>
+      <div class="module-stats" style="grid-template-columns:repeat(4, 1fr);">
+        <div class="module-stat"><span style="font-size:1rem;">${stats.total}</span><label>Trainees</label></div>
+        <div class="module-stat"><span style="font-size:1rem;">${stats.attempts}</span><label>Attempts</label></div>
+        <div class="module-stat"><span style="font-size:1rem;color:${statusColor};">${stats.passRate > 0 ? stats.passRate + '%' : '--'}</span><label>Pass Rate</label></div>
+        <div class="module-stat"><span style="font-size:1rem;color:${statusColor};">${statusText}</span><label>Status</label></div>
+      </div>
+      <div style="margin-top:10px;font-size:0.7rem;color:var(--gray-400);">
+        ${batch.startDate ? '📅 ' + batch.startDate : ''} ${batch.endDate ? ' → ' + batch.endDate : ''}
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function openBatchDetail(batchId) {
+  currentBatchId = batchId;
+  const batch = getBatches().find(b => b.id === batchId);
+  if (!batch) return;
+
+  document.getElementById('batchDetailTitle').textContent = batch.name;
+  document.getElementById('batchDetailView').classList.remove('hidden');
+  document.getElementById('batchCardsGrid').parentElement.parentElement.classList.add('hidden');
+
+  const stats = getBatchStats(batchId);
+  document.getElementById('bdTotal').textContent = stats.total;
+  document.getElementById('bdAvg').textContent = stats.avgScore > 0 ? stats.avgScore + '%' : '--';
+  document.getElementById('bdPass').textContent = stats.passRate > 0 ? stats.passRate + '%' : '--';
+  document.getElementById('bdTop').textContent = stats.topScore > 0 ? stats.topScore + '%' : '--';
+  document.getElementById('bdLow').textContent = stats.lowScore > 0 ? stats.lowScore + '%' : '--';
+
+  // Score distribution
+  const map = getTraineeBatchMap();
+  const batchTrainees = Object.entries(map).filter(([name, bid]) => bid === batchId).map(([name]) => name);
+  const batchResults = allResults.filter(r => batchTrainees.includes(r.name));
+
+  const dist = { '90-100': 0, '80-89': 0, '70-79': 0, '60-69': 0, 'below60': 0 };
+  batchResults.forEach(r => {
+    if (r.score >= 90) dist['90-100']++;
+    else if (r.score >= 80) dist['80-89']++;
+    else if (r.score >= 70) dist['70-79']++;
+    else if (r.score >= 60) dist['60-69']++;
+    else dist['below60']++;
+  });
+
+  const maxDist = Math.max(...Object.values(dist), 1);
+
+  document.getElementById('bdDist90').style.width = (dist['90-100'] / maxDist * 100) + '%';
+  document.getElementById('bdDist90').textContent = dist['90-100'];
+  document.getElementById('bdDist80').style.width = (dist['80-89'] / maxDist * 100) + '%';
+  document.getElementById('bdDist80').textContent = dist['80-89'];
+  document.getElementById('bdDist70').style.width = (dist['70-79'] / maxDist * 100) + '%';
+  document.getElementById('bdDist70').textContent = dist['70-79'];
+  document.getElementById('bdDist60').style.width = (dist['60-69'] / maxDist * 100) + '%';
+  document.getElementById('bdDist60').textContent = dist['60-69'];
+  document.getElementById('bdDist50').style.width = (dist['below60'] / maxDist * 100) + '%';
+  document.getElementById('bdDist50').textContent = dist['below60'];
+
+  // Trainees table
+  renderBatchTraineesTable(batchTrainees);
+
+  // Populate assign dropdown with unassigned trainees
+  const allTraineeNames = [...new Set(allResults.map(r => r.name))];
+  const assigned = getTraineeBatchMap();
+  const unassigned = allTraineeNames.filter(name => !assigned[name]);
+
+  const select = document.getElementById('assignTraineeSelect');
+  select.innerHTML = '<option value="">-- Select a trainee --</option>' + 
+    unassigned.map(name => `<option value="${name}">${name}</option>`).join('');
+}
+
+function renderBatchTraineesTable(batchTrainees) {
+  const tbody = document.getElementById('batchTraineesTable');
+
+  if (batchTrainees.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:20px;">No trainees assigned to this batch yet.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = batchTrainees.map(name => {
+    const traineeResults = allResults.filter(r => r.name === name);
+    const latest = traineeResults[traineeResults.length - 1];
+    const best = traineeResults.length > 0 ? Math.max(...traineeResults.map(r => r.score)) : 0;
+
+    return `
+    <tr>
+      <td><div class="user-cell"><div class="avatar">${name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div><div class="name">${name}</div></div></td>
+      <td>${latest ? (latest.dept || 'N/A') : 'N/A'}</td>
+      <td><span style="font-weight:700;color:${best>=70?'var(--green)':'var(--red)'}">${best > 0 ? best + '%' : '--'}</span></td>
+      <td><span class="status ${best>=70?'pass':best>0?'fail':'pending'}">${best>=70?'PASS':best>0?'FAIL':'PENDING'}</span></td>
+      <td>${traineeResults.length}</td>
+      <td>${latest ? latest.date : 'Never'}</td>
+      <td><button class="btn-nav" style="padding:4px 10px;font-size:0.75rem;" onclick="event.stopPropagation();removeTraineeFromBatch('${name}');openBatchDetail('${currentBatchId}');">Remove</button></td>
+    </tr>
+    `;
+  }).join('');
+}
+
+function assignSelectedTrainee() {
+  const select = document.getElementById('assignTraineeSelect');
+  const name = select.value;
+  if (!name || !currentBatchId) return;
+
+  assignTraineeToBatch(name, currentBatchId);
+  openBatchDetail(currentBatchId);
+}
+
+function closeBatchDetail() {
+  document.getElementById('batchDetailView').classList.add('hidden');
+  document.getElementById('batchCardsGrid').parentElement.parentElement.classList.remove('hidden');
+  currentBatchId = null;
+  renderBatchCards();
+  renderBatchComparison();
+}
+
+function deleteCurrentBatch() {
+  if (!currentBatchId) return;
+  if (!confirm('Are you sure you want to delete this batch? All trainee assignments will be removed.')) return;
+
+  deleteBatch(currentBatchId);
+  closeBatchDetail();
+}
+
+function renderBatchComparison() {
+  const batches = getBatches();
+  const chart = document.getElementById('batchComparisonChart');
+
+  if (batches.length === 0) {
+    chart.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px;">Create batches to see comparison.</div>';
+    return;
+  }
+
+  chart.innerHTML = batches.map((batch, i) => {
+    const stats = getBatchStats(batch.id);
+    const colors = ['var(--p3-purple)', 'var(--p3-gold)', 'var(--green)', 'var(--red)', 'var(--p3-purple-dark)'];
+    const color = colors[i % colors.length];
+    const width = stats.avgScore > 0 ? stats.avgScore + '%' : '0%';
+
+    return `
+    <div class="bar-row">
+      <div class="label" style="width:140px;font-size:0.8rem;">${batch.name}</div>
+      <div class="track"><div class="fill" style="width:${width};background:${color};padding-right:8px;">${stats.avgScore > 0 ? stats.avgScore + '%' : 'No data'}</div></div>
+    </div>
+    `;
+  }).join('');
+}
+
+// ==================== ENHANCED ANALYTICS FUNCTIONS ====================
+
+function calculateTrend(values) {
+  if (values.length < 2) return 0;
+  const first = values[0];
+  const last = values[values.length - 1];
+  return Math.round(((last - first) / first) * 100);
+}
+
+function getModuleTrend(module) {
+  const modResults = allResults.filter(r => r.module === module).sort((a,b) => a.id - b.id);
+  if (modResults.length < 2) return null;
+  const scores = modResults.map(r => r.score);
+  return calculateTrend(scores);
+}
+
+function getTimeBasedAnalytics() {
+  const byDate = {};
+  allResults.forEach(r => {
+    if (!byDate[r.date]) byDate[r.date] = { scores: [], passed: 0, total: 0 };
+    byDate[r.date].scores.push(r.score);
+    byDate[r.date].total++;
+    if (r.passed) byDate[r.date].passed++;
+  });
+
+  return Object.entries(byDate).map(([date, data]) => ({
+    date,
+    avgScore: Math.round(data.scores.reduce((a,b) => a+b, 0) / data.scores.length),
+    passRate: Math.round((data.passed / data.total) * 100),
+    attempts: data.total
+  })).sort((a,b) => new Date(a.date) - new Date(b.date));
+}
+
+function getTopPerformers(limit = 5) {
+  const traineeBest = {};
+  allResults.forEach(r => {
+    if (!traineeBest[r.name] || r.score > traineeBest[r.name].score) {
+      traineeBest[r.name] = r;
+    }
+  });
+  return Object.values(traineeBest).sort((a,b) => b.score - a.score).slice(0, limit);
+}
+
+function getStrugglingTrainees(limit = 5) {
+  const traineeBest = {};
+  allResults.forEach(r => {
+    if (!traineeBest[r.name] || r.score > traineeBest[r.name].score) {
+      traineeBest[r.name] = r;
+    }
+  });
+  return Object.values(traineeBest).filter(r => r.score < 70).sort((a,b) => a.score - b.score).slice(0, limit);
+}
+
+function getQuestionDifficulty() {
+  // This would require per-question tracking - placeholder for future enhancement
+  return [];
+}
+
+// ==================== ENHANCED ADMIN DASHBOARD ====================
+
+function showAdminTab(tab, navEl) {
+  currentAdminTab = tab;
+  document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+  document.getElementById('tab-' + tab).classList.remove('hidden');
+  document.querySelectorAll('.admin-nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+
+  const titles = { overview: 'Dashboard Overview', live: 'Live Tracking', trainees: 'Trainees', quizzes: 'Quizzes', performance: 'Performance', batches: 'Batch Management' };
+  document.getElementById('adminPageTitle').textContent = titles[tab] || 'Dashboard';
+
+  // Always re-sync results and module data from localStorage before rendering
+  refreshResultsFromStorage();
+
+  if(tab === 'overview') updateAdminDashboard();
+  if(tab === 'live') updateLiveTable();
+  if(tab === 'trainees') updateTraineesTable();
+  if(tab === 'quizzes') updateQuizzesTab();
+  if(tab === 'performance') updatePerformanceTab();
+  if(tab === 'batches') { renderBatchCards(); renderBatchComparison(); }
+}
+
+function updateAdminDashboard() {
+  const results = allResults;
+  const uniqueTrainees = [...new Set(results.map(r => r.name))];
+
+  document.getElementById('kpiTrainees').textContent = uniqueTrainees.length;
+  document.getElementById('kpiTraineesTrend').textContent = uniqueTrainees.length + ' unique learners';
+  document.getElementById('kpiAttempts').textContent = results.length;
+  document.getElementById('kpiAttemptsTrend').textContent = results.length + ' total attempts';
+
+  if(results.length > 0) {
+    const avg = Math.round(results.reduce((a,r) => a + r.score, 0) / results.length);
+    const best = Math.max(...results.map(r => r.score));
+    const bestHolder = results.find(r => r.score === best);
+    const passed = results.filter(r => r.passed).length;
+    const passRate = Math.round((passed / results.length) * 100);
+
+    // Completion rate: trainees with at least one attempt vs total unique
+    const completionRate = uniqueTrainees.length > 0 ? 100 : 0;
+
+    document.getElementById('kpiAvg').textContent = avg + '%';
+    document.getElementById('kpiAvgTrend').textContent = avg >= 70 ? 'Above passing threshold' : 'Below passing threshold';
+    document.getElementById('kpiAvgTrend').className = 'kpi-change ' + (avg >= 70 ? 'up' : 'down');
+
+    document.getElementById('kpiPass').textContent = passRate + '%';
+    document.getElementById('kpiPassTrend').textContent = passed + ' passed of ' + results.length + ' attempts';
+    document.getElementById('kpiPassTrend').className = 'kpi-change ' + (passRate >= 70 ? 'up' : 'down');
+
+    document.getElementById('kpiBest').textContent = best + '%';
+    document.getElementById('kpiBestHolder').textContent = bestHolder ? bestHolder.name.split(' ')[0] : '--';
+
+    document.getElementById('kpiCompletion').textContent = completionRate + '%';
+    document.getElementById('kpiCompletionTrend').textContent = uniqueTrainees.length + ' started';
+    document.getElementById('kpiCompletionTrend').className = 'kpi-change up';
+
+    // Module performance bars
+    const modules = ['CCM', 'PCM', 'RPM', 'Sales', 'Comprehensive'];
+    modules.forEach(mod => {
+      const modResults = results.filter(r => r.module === mod);
+      if (modResults.length > 0) {
+        const modAvg = Math.round(modResults.reduce((a,r) => a + r.score, 0) / modResults.length);
+        const barId = 'bar' + mod;
+        const barEl = document.getElementById(barId);
+        if (barEl) {
+          barEl.style.width = modAvg + '%';
+          barEl.textContent = modAvg + '%';
+        }
+      }
+    });
+
+    const failPct = Math.round(((results.length - passed) / results.length) * 100);
+    const pendingPct = 100 - passRate - failPct;
+    document.getElementById('donutChart').style.background = `conic-gradient(var(--green) 0% ${passRate}%, var(--red) ${passRate}% ${passRate+failPct}%, var(--p3-gold) ${passRate+failPct}% 100%)`;
+    document.getElementById('donutChart').innerHTML = `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:1.1rem;font-weight:700;color:var(--gray-800);">${passRate}%</div>`;
+
+    // Update legend counts
+    document.getElementById('legendPassed').textContent = passed + ' trainees';
+    document.getElementById('legendFailed').textContent = (results.length - passed) + ' trainees';
+    document.getElementById('legendPending').textContent = '0 trainees';
+  } else {
+    // No data state for donut
+    document.getElementById('donutChart').style.background = 'var(--gray-200)';
+    document.getElementById('donutChart').innerHTML = `<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:80px;height:80px;border-radius:50%;background:white;display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:600;color:var(--gray-400);text-align:center;">No Data</div>`;
+    document.getElementById('legendPassed').textContent = '0 trainees';
+    document.getElementById('legendFailed').textContent = '0 trainees';
+    document.getElementById('legendPending').textContent = '0 trainees';
+  }
+
+  const tbody = document.getElementById('resultsTable');
+  tbody.innerHTML = results.slice().reverse().slice(0, 10).map(r => {
+    const modColors = { CCM:'var(--p3-purple)', PCM:'var(--p3-gold)', RPM:'var(--green)', Sales:'var(--red)', Comprehensive:'var(--p3-purple-dark)' };
+    const modColor = modColors[r.module] || 'var(--gray-500)';
+    return `
+    <tr onclick="alert('Trainee: ${r.name}\\nModule: ${r.module||'CCM'}\\nScore: ${r.score}%\\nCorrect: ${r.correct}/${r.correct+r.wrong}\\nTime: ${r.time}\\nDate: ${r.date}')">
+      <td><div class="user-cell"><div class="avatar">${r.name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div><div><div class="name">${r.name}</div></div></div></td>
+      <td>${r.dept || 'N/A'}</td>
+      <td><span class="module-tag" style="background:${modColor}22;color:${modColor};">${r.module||'CCM'}</span></td>
+      <td><div class="score-bar"><div class="track"><div class="fill ${r.score>=70?'green':'red'}" style="width:${r.score}%"></div></div><span class="score-text">${r.score}%</span></div></td>
+      <td><span class="status ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'}</span></td>
+      <td>${r.time}</td>
+      <td>${r.date}</td>
+    </tr>
+  `}).join('');
+
+  updateLiveTable();
+
+  // Render Top Performers
+  const topPerformers = getTopPerformers(5);
+  const topEl = document.getElementById('topPerformersList');
+  if (topPerformers.length > 0) {
+    topEl.innerHTML = topPerformers.map((r, i) => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--gray-50);border-radius:8px;border:1px solid var(--gray-100);">
+        <div style="width:28px;height:28px;border-radius:50%;background:${i===0?'linear-gradient(135deg, var(--p3-gold), #e6a817)':i===1?'linear-gradient(135deg, #c0c0c0, #a0a0a0)':i===2?'linear-gradient(135deg, #cd7f32, #b87333)':'var(--gray-200)'};display:flex;align-items:center;justify-content:center;color:${i<3?'white':'var(--gray-600)'};font-weight:700;font-size:0.8rem;">${i+1}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.9rem;color:var(--gray-800);">${r.name}</div>
+          <div style="font-size:0.75rem;color:var(--gray-400);">${r.dept || 'N/A'} • ${r.module || 'CCM'}</div>
+        </div>
+        <div style="font-weight:700;font-size:1rem;color:var(--green);">${r.score}%</div>
+      </div>
+    `).join('');
+  }
+
+  // Render Struggling Trainees
+  const struggling = getStrugglingTrainees(5);
+  const strEl = document.getElementById('strugglingTraineesList');
+  if (struggling.length > 0) {
+    strEl.innerHTML = struggling.map(r => `
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--red-light);border-radius:8px;border:1px solid var(--red-light);">
+        <div class="avatar" style="width:28px;height:28px;font-size:0.7rem;background:var(--red);">${r.name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div>
+        <div style="flex:1;">
+          <div style="font-weight:600;font-size:0.9rem;color:var(--gray-800);">${r.name}</div>
+          <div style="font-size:0.75rem;color:var(--gray-400);">${r.dept || 'N/A'} • ${r.module || 'CCM'}</div>
+        </div>
+        <div style="font-weight:700;font-size:1rem;color:var(--red);">${r.score}%</div>
+      </div>
+    `).join('');
+  } else {
+    strEl.innerHTML = '<div style="text-align:center;color:var(--gray-400);padding:20px;">🎉 All trainees are passing!</div>';
+  }
+
+  // Render Time-based Analytics
+  const timeData = getTimeBasedAnalytics();
+  const timeEl = document.getElementById('timeAnalyticsChart');
+  if (timeData.length > 0) {
+    const maxAttempts = Math.max(...timeData.map(d => d.attempts), 1);
+    timeEl.innerHTML = timeData.slice(-10).map(d => `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="width:80px;font-size:0.75rem;color:var(--gray-500);text-align:right;flex-shrink:0;">${d.date}</div>
+        <div style="flex:1;display:flex;align-items:center;gap:8px;">
+          <div style="flex:1;height:24px;background:var(--gray-100);border-radius:4px;overflow:hidden;position:relative;">
+            <div style="position:absolute;left:0;top:0;height:100%;width:${d.avgScore}%;background:linear-gradient(90deg, var(--p3-purple), var(--p3-gold));border-radius:4px;opacity:0.8;"></div>
+            <div style="position:absolute;left:0;top:0;height:100%;width:${(d.attempts/maxAttempts)*100}%;background:var(--p3-purple-light);border-radius:4px;opacity:0.4;"></div>
+            <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:0.7rem;font-weight:700;color:var(--gray-700);">${d.avgScore}%</span>
+          </div>
+        </div>
+        <div style="width:60px;text-align:right;">
+          <span style="font-size:0.75rem;font-weight:600;color:var(--gray-600);">${d.attempts} attempts</span>
+        </div>
+        <div style="width:50px;text-align:right;">
+          <span style="font-size:0.75rem;font-weight:700;color:${d.passRate>=70?'var(--green)':'var(--red)'}">${d.passRate}%</span>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+function updateLiveTable() {
+  const tbody = document.getElementById('liveTable');
+  const active = getActiveLiveSessions();
+  const count = active.length;
+
+  // Update count badge
+  const countEl = document.getElementById('liveCount');
+  if (countEl) countEl.innerHTML = `<span class="live-pulse" style="color:var(--green);">●</span> ${count} Active`;
+  const activeCountEl = document.getElementById('liveActiveCount');
+  if (activeCountEl) activeCountEl.textContent = count;
+
+  // Update timestamp
+  const tsEl = document.getElementById('liveTimestamp');
+  const lastRefreshEl = document.getElementById('liveLastRefresh');
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  if (tsEl) tsEl.textContent = 'Refreshed at ' + timeStr;
+  if (lastRefreshEl) lastRefreshEl.textContent = 'Last sync: ' + timeStr;
+
+  // Update topbar last updated
+  const lastUpdatedEl = document.getElementById('lastUpdatedTime');
+  if (lastUpdatedEl) lastUpdatedEl.textContent = timeStr;
+
+  // Compute live stats
+  if (count > 0) {
+    const avgProg = Math.round(active.reduce((a, s) => {
+      const total = s.totalQuestions || 30;
+      return a + Math.round((s.answered / total) * 100);
+    }, 0) / count);
+    const avgScore = Math.round(active.reduce((a, s) => {
+      return a + (s.answered > 0 ? Math.round((s.correct / s.answered) * 100) : 0);
+    }, 0) / count);
+    const avgProgEl = document.getElementById('liveAvgProgress');
+    const avgScoreEl = document.getElementById('liveAvgScore');
+    if (avgProgEl) avgProgEl.textContent = avgProg + '%';
+    if (avgScoreEl) avgScoreEl.textContent = avgScore + '%';
+  } else {
+    const avgProgEl = document.getElementById('liveAvgProgress');
+    const avgScoreEl = document.getElementById('liveAvgScore');
+    if (avgProgEl) avgProgEl.textContent = '--';
+    if (avgScoreEl) avgScoreEl.textContent = '--';
+  }
+
+  // Completed today
+  const todayStr = new Date().toLocaleDateString();
+  const todayResults = allResults.filter(r => r.date === todayStr);
+  const todayPassed = todayResults.filter(r => r.passed).length;
+  const todayCompEl = document.getElementById('liveCompletedToday');
+  const todayPassEl = document.getElementById('liveCompletedPassRate');
+  if (todayCompEl) todayCompEl.textContent = todayResults.length;
+  if (todayPassEl) {
+    const rate = todayResults.length > 0 ? Math.round((todayPassed / todayResults.length) * 100) : 0;
+    todayPassEl.textContent = rate + '% pass rate';
+    todayPassEl.className = 'kpi-change ' + (rate >= 70 ? 'up' : 'down');
+  }
+
+  // Completed today table
+  const compBody = document.getElementById('liveCompletedTable');
+  if (compBody) {
+    if (todayResults.length === 0) {
+      compBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--gray-400);padding:20px;">No completions yet today</td></tr>';
+    } else {
+      compBody.innerHTML = todayResults.slice().reverse().map(r => {
+        const modColors = { CCM:'var(--p3-purple)', PCM:'var(--p3-gold)', RPM:'var(--green)', Sales:'var(--red)', Comprehensive:'var(--p3-purple-dark)' };
+        const modColor = modColors[r.module] || 'var(--gray-500)';
+        return `
+        <tr>
+          <td><div class="user-cell"><div class="avatar">${r.name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div><div class="name">${r.name}</div></div></td>
+          <td>${r.dept || 'N/A'}</td>
+          <td><span class="module-tag" style="background:${modColor}22;color:${modColor};">${r.module || 'CCM'}</span></td>
+          <td><div class="score-bar"><div class="track"><div class="fill ${r.score>=70?'green':'red'}" style="width:${r.score}%"></div></div><span class="score-text">${r.score}%</span></div></td>
+          <td><span class="status ${r.passed?'pass':'fail'}">${r.passed?'PASS':'FAIL'}</span></td>
+          <td>${r.time}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  // Live sessions table
+  if(count === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:30px;"><div style="font-size:1.2rem;margin-bottom:8px;">👀</div>No active quiz sessions right now<br><span style="font-size:0.8rem;">This view auto-refreshes every 3 seconds</span></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = active.map(s => {
+    const totalQ = s.totalQuestions || 30;
+    const progress = Math.round((s.answered / totalQ) * 100);
+    const accuracy = s.answered > 0 ? Math.round((s.correct / s.answered) * 100) : 0;
+    const elapsed = s.timeSpent || Math.floor((Date.now() - s.startTime) / 1000);
+    const m = Math.floor(elapsed/60).toString().padStart(2,'0');
+    const sec = (elapsed%60).toString().padStart(2,'0');
+    const modColors = { CCM:'var(--p3-purple)', PCM:'var(--p3-gold)', RPM:'var(--green)', Sales:'var(--red)', Comprehensive:'var(--p3-purple-dark)' };
+    const modKey = s.module ? (s.module.includes('PCM')?'PCM':s.module.includes('RPM')?'RPM':s.module.includes('Sales')?'Sales':s.module.includes('Comprehensive')?'Comprehensive':'CCM') : 'CCM';
+    const modColor = modColors[modKey] || 'var(--gray-500)';
+    return `
+    <tr>
+      <td><div class="user-cell"><div class="avatar">${s.name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div><div class="name">${s.name}</div></div></td>
+      <td>${s.dept || 'N/A'}</td>
+      <td><span class="module-tag" style="background:${modColor}22;color:${modColor};">${modKey}</span></td>
+      <td>
+        <div class="score-bar">
+          <div class="track"><div class="fill purple" style="width:${progress}%"></div></div>
+          <span class="score-text">${s.answered}/${totalQ}</span>
+        </div>
+        <div style="font-size:0.7rem;color:var(--gray-400);margin-top:2px;">${progress}% done</div>
+      </td>
+      <td>
+        <span style="font-weight:700;color:${accuracy>=70?'var(--green)':accuracy>=50?'var(--p3-gold)':'var(--red)'}">${accuracy}%</span>
+        <span style="font-size:0.75rem;color:var(--gray-400);"> (${s.correct}✓/${s.answered - s.correct}✗)</span>
+      </td>
+      <td>${m}:${sec}</td>
+      <td><span class="status active"><span class="live-pulse">●</span> In Progress</span></td>
+    </tr>
+    `;
+  }).join('');
+}
+
+function updateTraineesTable() {
+  const tbody = document.getElementById('traineesTable');
+  if(allResults.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:30px;">No trainees yet</td></tr>';
+    return;
+  }
+
+  // Aggregate trainee data
+  const traineeMap = {};
+  allResults.forEach(r => {
+    if (!traineeMap[r.name]) {
+      traineeMap[r.name] = { name: r.name, dept: r.dept, scores: [], dates: [], passed: 0, failed: 0 };
+    }
+    traineeMap[r.name].scores.push(r.score);
+    traineeMap[r.name].dates.push(r.date);
+    if (r.passed) traineeMap[r.name].passed++; else traineeMap[r.name].failed++;
+  });
+
+  let trainees = Object.values(traineeMap).map(t => ({
+    ...t,
+    bestScore: Math.max(...t.scores),
+    attempts: t.scores.length,
+    lastDate: t.dates[t.dates.length - 1],
+    status: t.passed > 0 ? 'pass' : 'fail',
+    batch: getTraineeBatch(t.name)
+  }));
+
+  // Apply filters
+  const searchTerm = (document.getElementById('traineeSearch')?.value || '').toLowerCase();
+  const statusFilter = document.getElementById('traineeFilterStatus')?.value || 'all';
+
+  if (searchTerm) {
+    trainees = trainees.filter(t => t.name.toLowerCase().includes(searchTerm) || (t.dept || '').toLowerCase().includes(searchTerm));
+  }
+  if (statusFilter !== 'all') {
+    trainees = trainees.filter(t => t.status === statusFilter);
+  }
+
+  // Apply sort
+  const sortType = document.getElementById('traineeSort')?.value || 'recent';
+  if (sortType === 'score-high') trainees.sort((a,b) => b.bestScore - a.bestScore);
+  else if (sortType === 'score-low') trainees.sort((a,b) => a.bestScore - b.bestScore);
+  else if (sortType === 'name') trainees.sort((a,b) => a.name.localeCompare(b.name));
+  else trainees.sort((a,b) => new Date(b.lastDate) - new Date(a.lastDate));
+
+  if (trainees.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-400);padding:30px;">No matching trainees</td></tr>';
+    return;
+  }
+
+  const batches = getBatches();
+  tbody.innerHTML = trainees.map(t => {
+    const batchName = t.batch ? (batches.find(b => b.id === t.batch)?.name || 'Unknown') : 'Unassigned';
+    return `
+    <tr>
+      <td><div class="user-cell"><div class="avatar">${t.name.split(' ').map(n=>n[0]).join('').substr(0,2).toUpperCase()}</div><div class="name">${t.name}</div></div></td>
+      <td>${t.dept || 'N/A'}</td>
+      <td><span style="font-size:0.8rem;padding:3px 10px;border-radius:12px;background:${t.batch?'var(--p3-purple-light)':'var(--gray-100)'};color:${t.batch?'var(--p3-purple)':'var(--gray-400)'};font-weight:600;">${batchName}</span></td>
+      <td><span style="font-weight:700;color:${t.bestScore>=70?'var(--green)':'var(--red)'}">${t.bestScore}%</span></td>
+      <td>${t.attempts}</td>
+      <td><span class="status ${t.status==='pass'?'pass':'fail'}">${t.status==='pass'?'PASS':'FAIL'}</span></td>
+      <td>${t.lastDate}</td>
+    </tr>
+    `;
+  }).join('');
+}
+
+function filterTraineesTable() {
+  updateTraineesTable();
+}
+
+function updateQuizzesTab() {
+  const modules = ['CCM', 'PCM', 'RPM', 'Sales', 'Comprehensive'];
+  modules.forEach(mod => {
+    const modResults = allResults.filter(r => r.module === mod);
+    const attempts = modResults.length;
+    const passed = modResults.filter(r => r.passed).length;
+    const rate = attempts > 0 ? Math.round((passed / attempts) * 100) : null;
+    const avg = attempts > 0 ? Math.round(modResults.reduce((a,r) => a + r.score, 0) / attempts) : null;
+
+    const attEl = document.getElementById('quizAttempts' + mod);
+    const rateEl = document.getElementById('quizPassRate' + mod);
+    const avgEl = document.getElementById('quizAvg' + mod);
+    if (attEl) attEl.textContent = attempts;
+    if (rateEl) rateEl.textContent = rate !== null ? rate + '%' : '--';
+    if (avgEl) avgEl.textContent = avg !== null ? avg + '%' : '--';
+  });
+
+  // Legacy support
+  const legacyCCMAttempts = allResults.filter(r => r.module === 'CCM').length;
+  const legacyEl = document.getElementById('quizAttempts');
+  const legacyRateEl = document.getElementById('quizPassRate');
+  if (legacyEl) legacyEl.textContent = legacyCCMAttempts;
+  if (legacyRateEl && legacyCCMAttempts > 0) {
+    const passed = allResults.filter(r => r.module === 'CCM' && r.passed).length;
+    legacyRateEl.textContent = Math.round((passed / legacyCCMAttempts) * 100) + '%';
+  }
+}
+
+function updatePerformanceTab() {
+  const modules = ['CCM', 'PCM', 'RPM', 'Sales', 'Comprehensive'];
+  const colors = { CCM: 'var(--p3-purple)', PCM: 'var(--p3-gold)', RPM: 'var(--green)', Sales: 'var(--red)', Comprehensive: 'var(--p3-purple-dark)' };
+
+  modules.forEach(mod => {
+    const modResults = allResults.filter(r => r.module === mod);
+    const attempts = modResults.length;
+    const avgScore = attempts > 0 ? Math.round(modResults.reduce((a,r) => a + r.score, 0) / attempts) : 0;
+    const passed = modResults.filter(r => r.passed).length;
+    const passRate = attempts > 0 ? Math.round((passed / attempts) * 100) : 0;
+
+    const scoreEl = document.getElementById('perf' + mod + 'Score');
+    const attEl = document.getElementById('perf' + mod + 'Attempts');
+    const passEl = document.getElementById('perf' + mod + 'Pass');
+    const avgEl = document.getElementById('perf' + mod + 'Avg');
+    const barEl = document.getElementById('perf' + mod + 'Bar');
+    const compEl = document.getElementById('comp' + mod);
+
+    if (scoreEl) scoreEl.textContent = avgScore > 0 ? avgScore + '%' : '--';
+    if (attEl) attEl.textContent = attempts;
+    if (passEl) passEl.textContent = passRate > 0 ? passRate + '%' : '--';
+    if (avgEl) avgEl.textContent = avgScore > 0 ? avgScore + '%' : '--';
+    if (barEl) { barEl.style.width = avgScore + '%'; barEl.style.background = colors[mod]; }
+    if (compEl) { compEl.style.width = avgScore + '%'; compEl.textContent = avgScore > 0 ? avgScore + '%' : 'No data'; }
+
+    // Update trend indicators
+    const trendEl = document.getElementById('trend' + mod);
+    const trendDirEl = document.getElementById('trend' + mod + 'Dir');
+    if (trendEl && trendDirEl) {
+      const trend = getModuleTrend(mod);
+      if (trend !== null) {
+        trendEl.textContent = (trend >= 0 ? '+' : '') + trend + '%';
+        trendEl.style.color = trend >= 0 ? 'var(--green)' : 'var(--red)';
+        trendDirEl.textContent = trend >= 0 ? '↗ Improving' : '↘ Declining';
+        trendDirEl.className = 'kpi-change ' + (trend >= 0 ? 'up' : 'down');
+      } else {
+        trendEl.textContent = '--';
+        trendEl.style.color = 'var(--gray-400)';
+        trendDirEl.textContent = 'Need more data';
+        trendDirEl.className = 'kpi-change';
+      }
+    }
+  });
+}
+
+// ==================== EXPORT FUNCTIONS ====================
+function exportResultsToCSV() {
+  if (allResults.length === 0) { alert('No results to export.'); return; }
+  const headers = ['Name', 'Department', 'Module', 'Score (%)', 'Status', 'Correct', 'Wrong', 'Time', 'Date'];
+  const rows = allResults.map(r => [
+    `"${r.name}"`, `"${r.dept || ''}"`, `"${r.module || 'CCM'}"`,
+    r.score, r.passed ? 'PASS' : 'FAIL', r.correct, r.wrong, `"${r.time}"`, `"${r.date}"`
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'p3_quiz_results_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+function exportBatchReport(batchId) {
+  const batch = getBatches().find(b => b.id === batchId);
+  if (!batch) return;
+  const map = getTraineeBatchMap();
+  const batchTrainees = Object.entries(map).filter(([name, bid]) => bid === batchId).map(([name]) => name);
+  const batchResults = allResults.filter(r => batchTrainees.includes(r.name));
+  if (batchResults.length === 0) { alert('No results to export for this batch.'); return; }
+  const headers = ['Batch', 'Name', 'Department', 'Module', 'Score (%)', 'Status', 'Date'];
+  const rows = batchResults.map(r => [
+    `"${batch.name}"`, `"${r.name}"`, `"${r.dept || ''}"`, `"${r.module || 'CCM'}"`,
+    r.score, r.passed ? 'PASS' : 'FAIL', `"${r.date}"`
+  ]);
+  const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'p3_batch_' + batch.name.replace(/\s+/g,'_') + '_' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+// Track current active admin tab for smart refresh
+let currentAdminTab = 'overview';
+
+// Refresh admin data periodically
+setInterval(() => {
+  if(document.getElementById('adminApp').style.display !== 'none') {
+    refreshResultsFromStorage();
+    // Always update live table (it self-manages its section)
+    updateLiveTable();
+    // Update the current active tab
+    if(currentAdminTab === 'overview') updateAdminDashboard();
+    if(currentAdminTab === 'performance') updatePerformanceTab();
+    if(currentAdminTab === 'trainees') updateTraineesTable();
+    if(currentAdminTab === 'quizzes') updateQuizzesTab();
+  }
+}, 3000);
+
+// Clean up live session if trainee closes tab mid-quiz
+window.addEventListener('beforeunload', () => {
+  if(window.currentSessionId) {
+    deleteLiveSession(window.currentSessionId);
+  }
+});
+
+// Init
+// Note: initDemoBatches() is called inside the firebase-ready hook above
+// so it runs only after Firestore listeners are active.
+switchMode('home');
+</script>
+
+</body>
+</html>
